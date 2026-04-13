@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBackground">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF"
+        app:elevation="4dp">
+
+        <!-- Tiêu đề -->
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbarTx"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:title="Giao Dịch"
+            app:titleTextColor="@color/textColorPrimary" />
+
+        <!-- Thanh chọn Lọc Tháng/Năm -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingVertical="12dp">
+
+            <!-- Nút Prev -->
+            <ImageView
+                android:id="@+id/btnPrevMonth"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:padding="4dp"
+                android:src="@android:drawable/ic_media_previous"
+                app:tint="@color/textColorSecondary" />
+
+            <!-- Chữ Lọc Thời gian -->
+            <TextView
+                android:id="@+id/tvCurrentMonth"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tháng 04, 2026"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/textColorPrimary"
+                android:layout_marginHorizontal="32dp" />
+
+            <!-- Nút Next -->
+            <ImageView
+                android:id="@+id/btnNextMonth"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:padding="4dp"
+                android:src="@android:drawable/ic_media_next"
+                app:tint="@color/textColorSecondary" />
+        </LinearLayout>
+
+        <!-- Dải Báo Cáo Nhanh (In / Out) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingHorizontal="24dp"
+            android:paddingBottom="16dp">
+
+            <LinearLayout
+                android:id="@+id/layoutSummaryIn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TIỀN VÀO"
+                    android:textColor="@color/textColorSecondary"
+                    android:textSize="12sp" />
+                <TextView
+                    android:id="@+id/tvTotalInTx"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="+ 0 đ"
+                    android:textColor="#4CAF50"
+                    android:textStyle="bold"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutSummaryNet"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.2"
+                android:orientation="vertical"
+                android:gravity="center">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TỔNG KẾT"
+                    android:textColor="@color/textColorSecondary"
+                    android:textSize="12sp" />
+                <TextView
+                    android:id="@+id/tvNetTotalTx"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0 đ"
+                    android:textColor="@color/textColorPrimary"
+                    android:textStyle="bold"
+                    android:textSize="18sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutSummaryOut"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TIỀN RA"
+                    android:textColor="@color/textColorSecondary"
+                    android:textSize="12sp" />
+                <TextView
+                    android:id="@+id/tvTotalOutTx"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="- 0 đ"
+                    android:textColor="#F44336"
+                    android:textStyle="bold"
+                    android:textSize="16sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Trạm Trung Chuyển (Chứa cả 3 trạng thái UX) -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <!-- UX 1: Đang Tải (Nhấp nháy Skeleton) -->
+        <include
+            android:id="@+id/layoutLoading"
+            layout="@layout/layout_shimmer_loading"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="visible" />
+
+        <!-- UX 2: Rỗng dữ liệu (Empty State) -->
+        <include
+            android:id="@+id/layoutEmpty"
+            layout="@layout/layout_empty_state"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
+        <!-- UX 3: Có dữ liệu (List giao dịch cũ) -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvAllTransactions"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingTop="8dp"
+            android:paddingBottom="80dp"
+            android:visibility="gone"
+            tools:listitem="@layout/item_transaction" />
+    </FrameLayout>
+
+    <!-- Nút Lọc nổi bật ở góc -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabFilter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="24dp"
+        android:src="@android:drawable/ic_menu_search"
+        app:backgroundTint="#FFFFFF"
+        app:tint="@color/textColorPrimary" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
