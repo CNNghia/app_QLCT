@@ -56,7 +56,33 @@ class TransactionsActivity : AppCompatActivity() {
 
         val rvTransactions = findViewById<RecyclerView>(R.id.rvAllTransactions)
         rvTransactions.layoutManager = LinearLayoutManager(this)
-        adapter = TransactionAdapter()
+        adapter = TransactionAdapter(
+            onItemClick = { transaction ->
+                // Khi nhấn: Mở màn hình Sửa
+                val intent = android.content.Intent(this, AddTransactionActivity::class.java).apply {
+                    putExtra("TRANSACTION_ID", transaction.id)
+                    putExtra("AMOUNT", transaction.amount)
+                    putExtra("NOTE", transaction.note)
+                    putExtra("CATEGORY", transaction.categoryName)
+                    putExtra("WALLET", transaction.walletName)
+                    putExtra("DATE", transaction.date)
+                    putExtra("TYPE", transaction.type)
+                }
+                startActivity(intent)
+            },
+            onItemLongClick = { transaction ->
+                // Khi nhấn giữ: Hiện thông báo xác nhận Xóa
+                androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Xóa giao dịch")
+                    .setMessage("Bạn có chắc chắn muốn xóa giao dịch này không?")
+                    .setPositiveButton("Xóa") { _, _ ->
+                        viewModel.delete(transaction)
+                        Toast.makeText(this, "Đã xóa giao dịch!", Toast.LENGTH_SHORT).show()
+                    }
+                    .setNegativeButton("Hủy", null)
+                    .show()
+            }
+        )
         rvTransactions.adapter = adapter
 
         val btnPrevMonth = findViewById<ImageView>(R.id.btnPrevMonth)

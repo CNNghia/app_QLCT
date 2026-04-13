@@ -95,7 +95,7 @@ class MainActivity : AppCompatActivity() {
         // Sét up Adapter cho Danh sách cuộn Giao dịch (RecyclerView)
         val rvTransactions = findViewById<RecyclerView>(R.id.rvTransactions)
         rvTransactions.layoutManager = LinearLayoutManager(this)
-        val adapter = TransactionAdapter()
+        val adapter = TransactionAdapter(onItemClick = {}, onItemLongClick = {})
         rvTransactions.adapter = adapter
         
         // Quan sát dữ liệu thật từ ViewModel (Lấy 10 cái gần nhất chẳng hạn)

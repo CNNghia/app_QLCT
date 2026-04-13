@@ -96,6 +96,34 @@ class AddTransactionActivity : AppCompatActivity() {
             datePickerDialog.show()
         }
 
+        // Kiểm tra xem có phải đang ở chế độ SỬA không
+        val transactionId = intent.getLongExtra("TRANSACTION_ID", -1L)
+        val isEditMode = transactionId != -1L
+
+        if (isEditMode) {
+            val amount = intent.getDoubleExtra("AMOUNT", 0.0)
+            val note = intent.getStringExtra("NOTE") ?: ""
+            val category = intent.getStringExtra("CATEGORY") ?: ""
+            val wallet = intent.getStringExtra("WALLET") ?: ""
+            val date = intent.getLongExtra("DATE", System.currentTimeMillis())
+            val type = intent.getStringExtra("TYPE") ?: "EXPENSE"
+
+            etAmount.setText(if (amount % 1.0 == 0.0) amount.toLong().toString() else amount.toString())
+            etNote.setText(note)
+            tvCategoryName.text = category
+            tvWalletName.text = wallet
+            selectedDateTimestamp = date
+            
+            val calendarEdit = Calendar.getInstance()
+            calendarEdit.timeInMillis = date
+            tvSelectedDate?.text = "${calendarEdit.get(Calendar.DAY_OF_MONTH)}/${calendarEdit.get(Calendar.MONTH) + 1}/${calendarEdit.get(Calendar.YEAR)}"
+
+            if (type == "INCOME") toggleTransactionType.check(R.id.btnTypeIncome) else toggleTransactionType.check(R.id.btnTypeExpense)
+            
+            btnSave.text = "CẬP NHẬT"
+            findViewById<TextView>(R.id.tvTitle).text = "Sửa giao dịch"
+        }
+
         // Xử lý nút LƯU với Validation
         btnSave.setOnClickListener {
             val amountStr = etAmount.text.toString().trim()
@@ -120,6 +148,7 @@ class AddTransactionActivity : AppCompatActivity() {
             }
 
             val transaction = Transaction(
+                id = if (isEditMode) transactionId else 0L,
                 amount = amount,
                 note = note,
                 categoryName = category,
@@ -128,8 +157,13 @@ class AddTransactionActivity : AppCompatActivity() {
                 type = type
             )
 
-            viewModel.insert(transaction)
-            Toast.makeText(this, "Đã lưu giao dịch thành công!", Toast.LENGTH_SHORT).show()
+            if (isEditMode) {
+                viewModel.update(transaction)
+                Toast.makeText(this, "Đã cập nhật giao dịch!", Toast.LENGTH_SHORT).show()
+            } else {
+                viewModel.insert(transaction)
+                Toast.makeText(this, "Đã lưu giao dịch thành công!", Toast.LENGTH_SHORT).show()
+            }
             finish()
         }
     }

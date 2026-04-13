@@ -13,7 +13,10 @@ import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
-class TransactionAdapter : ListAdapter<Transaction, TransactionAdapter.ViewHolder>(DiffCallback()) {
+class TransactionAdapter(
+    private val onItemClick: (Transaction) -> Unit,
+    private val onItemLongClick: (Transaction) -> Unit
+) : ListAdapter<Transaction, TransactionAdapter.ViewHolder>(DiffCallback()) {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvNote: TextView = view.findViewById(R.id.tvTransactionNote)
@@ -30,6 +33,15 @@ class TransactionAdapter : ListAdapter<Transaction, TransactionAdapter.ViewHolde
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = getItem(position)
         
+        holder.itemView.setOnClickListener {
+            onItemClick(item)
+        }
+
+        holder.itemView.setOnLongClickListener {
+            onItemLongClick(item)
+            true
+        }
+
         holder.tvNote.text = if (item.note.isNotEmpty()) item.note else item.categoryName
         
         val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
