@@ -45,22 +45,25 @@ fun WalletCard(
         modifier = modifier
             .fillMaxWidth()
             .animateContentSize(),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+                .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Thông tin ví
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = wallet.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = formattedBalance,
                     style = MaterialTheme.typography.bodyLarge,
@@ -69,21 +72,31 @@ fun WalletCard(
                 )
             }
 
-            // Nút Sửa
-            IconButton(onClick = { onEdit(wallet) }) {
+            // Nút Sửa (Xanh nhạt/Cyan)
+            IconButton(
+                onClick = { onEdit(wallet) },
+                modifier = Modifier.size(32.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Default.Edit,
-                    contentDescription = "Sửa ví ${wallet.name}",
-                    tint = MaterialTheme.colorScheme.secondary
+                    contentDescription = "Sửa ví",
+                    tint = Color(0xFF00E5FF),
+                    modifier = Modifier.size(20.dp)
                 )
             }
+            
+            Spacer(modifier = Modifier.width(8.dp))
 
-            // Nút Xóa
-            IconButton(onClick = { showDeleteConfirm = true }) {
+            // Nút Xóa (Đỏ thẫm)
+            IconButton(
+                onClick = { showDeleteConfirm = true },
+                modifier = Modifier.size(32.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Xóa ví ${wallet.name}",
-                    tint = MaterialTheme.colorScheme.error
+                    contentDescription = "Xóa ví",
+                    tint = Color(0xFFC62828), // Dark red
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
@@ -101,9 +114,7 @@ fun WalletCard(
                         showDeleteConfirm = false
                         onDelete(wallet)
                     },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    )
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
                     Text("Xóa")
                 }

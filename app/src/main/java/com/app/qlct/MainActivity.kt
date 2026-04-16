@@ -16,12 +16,16 @@ import com.google.android.material.card.MaterialCardView
 import android.widget.LinearLayout
 
 import androidx.activity.viewModels
-import com.app.qlct.data.database.AppDatabase
-import com.app.qlct.data.repository.TransactionRepository
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import com.app.qlct.data.AppDatabase
+import com.app.qlct.data.TransactionRepository
 import com.app.qlct.presentation.viewmodel.TransactionViewModel
 import com.app.qlct.presentation.viewmodel.TransactionViewModelFactory
 
+import com.app.qlct.data.entity.Transaction
 class MainActivity : AppCompatActivity() {
+    private var currentTransactions: List<Transaction> = emptyList()
 
     private val database by lazy { AppDatabase.getDatabase(this) }
     private val repository by lazy { TransactionRepository(database.transactionDao()) }
@@ -34,14 +38,23 @@ class MainActivity : AppCompatActivity() {
         
         setContentView(R.layout.fragment_dashboard)
 
-        // Mock dữ liệu thẻ Tổng Thu
+        // Khởi tạo thẻ UI (giá trị sẽ được observer cập nhật)
         val incomeCard = findViewById<View>(R.id.cardIncome)
         val titleIncome = incomeCard.findViewById<TextView>(R.id.tvStatTitle)
         val amountIncome = incomeCard.findViewById<TextView>(R.id.tvStatAmount)
         titleIncome.text = "Tổng Thu"
-        amountIncome.text = "+ 15.000.000 đ"
+        // Bắt đầu lắng nghe tổng số dư từ Wallet Repository
         val tvTotalBalance = findViewById<TextView>(R.id.tvTotalBalance)
-        tvTotalBalance.text = "14.725.000 đ"
+        val walletRepository = com.app.qlct.data.WalletRepository(database.walletDao())
+        
+        lifecycleScope.launch {
+            walletRepository.totalBalance.collect { balance ->
+                val actualBalance = balance ?: 0.0
+                val formatter = java.text.DecimalFormat("#,###")
+                val formattedBalance = formatter.format(actualBalance).replace(",", ".")
+                tvTotalBalance.text = "$formattedBalance đ"
+            }
+        }
 
         // Bắt sự kiện icon góc phải trên cùng Dashboard -> Phóng qua màn hình VÍ
         val btnOpenWallet = findViewById<View>(R.id.btnOpenWallet)
@@ -57,12 +70,11 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // Mock dữ liệu thẻ Tổng Chi
+        // Khởi tạo thẻ Tổng Chi
         val expenseCard = findViewById<View>(R.id.cardExpense)
         val titleExpense = expenseCard.findViewById<TextView>(R.id.tvStatTitle)
         val amountExpense = expenseCard.findViewById<TextView>(R.id.tvStatAmount)
         titleExpense.text = "Tổng Chi"
-        amountExpense.text = "- 275.000 đ"
         amountExpense.setTextColor(Color.parseColor("#F44336")) // Đổi màu đỏ
 
         // Sét up chức năng Bấm Vào Card chui sang Màn Chi Tiết
@@ -81,16 +93,9 @@ class MainActivity : AppCompatActivity() {
         val toggleChart = findViewById<MaterialButtonToggleGroup>(R.id.toggleChartType)
         toggleChart.addOnButtonCheckedListener { group, checkedId, isChecked ->
             if (isChecked) {
-                when (checkedId) {
-                    R.id.btnChartTotal -> setupPieChartTotal()
-                    R.id.btnChartIncome -> setupPieChartIncome()
-                    R.id.btnChartExpense -> setupPieChartExpense()
-                }
+                redrawCurrentChart()
             }
         }
-
-        // Mặc định lúc vừa vào app thì vẽ biểu đồ TỔNG
-        setupPieChartTotal()
 
         // Sét up Adapter cho Danh sách cuộn Giao dịch (RecyclerView)
         val rvTransactions = findViewById<RecyclerView>(R.id.rvTransactions)
@@ -98,10 +103,20 @@ class MainActivity : AppCompatActivity() {
         val adapter = TransactionAdapter(onItemClick = {}, onItemLongClick = {})
         rvTransactions.adapter = adapter
         
-        // Quan sát dữ liệu thật từ ViewModel (Lấy 10 cái gần nhất chẳng hạn)
+        // Quan sát dữ liệu thật từ ViewModel và Tự động tính toán
         viewModel.allTransactions.observe(this) { transactions ->
             if (transactions != null) {
+                currentTransactions = transactions
                 adapter.submitList(transactions.take(10))
+                
+                val totalIncome = transactions.filter { it.type == "INCOME" }.sumOf { it.amount }
+                val totalExpense = transactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
+                
+                val formatter = java.text.DecimalFormat("#,###")
+                amountIncome.text = if (totalIncome > 0) "+ ${formatter.format(totalIncome).replace(",", ".")} đ" else "0 đ"
+                amountExpense.text = if (totalExpense > 0) "- ${formatter.format(totalExpense).replace(",", ".")} đ" else "0 đ"
+
+                redrawCurrentChart()
             }
         }
 
@@ -113,22 +128,32 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun redrawCurrentChart() {
+        val toggleChart = findViewById<MaterialButtonToggleGroup>(R.id.toggleChartType)
+        val checkedId = toggleChart.checkedButtonId
+        
+        when (checkedId) {
+            R.id.btnChartTotal -> setupPieChartTotal()
+            R.id.btnChartIncome -> setupPieChartIncome()
+            R.id.btnChartExpense -> setupPieChartExpense()
+            else -> setupPieChartTotal()
+        }
+    }
+
     private fun setupPieChartExpense() {
         val pieChart = findViewById<PieChart>(R.id.pieChart)
-
+        val expenses = currentTransactions.filter { it.type == "EXPENSE" }
+        val totalExpense = expenses.sumOf { it.amount }
+        val expensesByCategory = expenses.groupBy { it.categoryName }.mapValues { it.value.sumOf { t -> t.amount } }
+        
         val entries = ArrayList<PieEntry>()
-        entries.add(PieEntry(120000f, "Giải trí"))
-        entries.add(PieEntry(50000f, "Ăn uống"))
-        entries.add(PieEntry(40000f, "Đi lại"))
-        entries.add(PieEntry(65000f, "Cafe"))
+        for ((category, amount) in expensesByCategory) {
+            if (amount > 0) entries.add(PieEntry(amount.toFloat(), category))
+        }
 
         val dataSet = PieDataSet(entries, "")
-        val colors = listOf(
-            Color.parseColor("#FF9800"), // Cam
-            Color.parseColor("#E91E63"), // Hồng
-            Color.parseColor("#2196F3"), // Xanh dương
-            Color.parseColor("#9C27B0")  // Tím
-        )
+        val colorsStr = listOf("#FF9800", "#E91E63", "#2196F3", "#9C27B0", "#F44336", "#00BCD4", "#8BC34A")
+        val colors = entries.indices.map { Color.parseColor(colorsStr[it % colorsStr.size]) }
         dataSet.colors = colors
         dataSet.valueTextSize = 12f
         dataSet.valueTextColor = Color.WHITE
@@ -138,33 +163,32 @@ class MainActivity : AppCompatActivity() {
         pieChart.isDrawHoleEnabled = true
         pieChart.holeRadius = 50f
         pieChart.setTransparentCircleAlpha(0)
-        pieChart.centerText = "Chi Tiêu\n- 275.000 đ"
+        val formatter = java.text.DecimalFormat("#,###")
+        val formattedTot = formatter.format(totalExpense).replace(",", ".")
+        pieChart.centerText = "Chi Tiêu\n- $formattedTot đ"
         pieChart.setCenterTextSize(14f)
         pieChart.setCenterTextColor(Color.parseColor("#F44336"))
         pieChart.legend.isEnabled = false // Tắt Legend rởm của thư viện
         
-        pieChart.animateY(800)
+        pieChart.animateY(500)
 
-        // Tự động Vẽ Bảng Chi Tiết (Legend Xịn) sang Góc Trái
-        updateLegend(entries, colors, "Tổng Chi", "- 275.000 đ", Color.parseColor("#F44336"))
+        updateLegend(entries, colors, "Tổng Chi", "- $formattedTot đ", Color.parseColor("#F44336"))
     }
 
     private fun setupPieChartIncome() {
         val pieChart = findViewById<PieChart>(R.id.pieChart)
+        val incomes = currentTransactions.filter { it.type == "INCOME" }
+        val totalIncome = incomes.sumOf { it.amount }
+        val incomesByCategory = incomes.groupBy { it.categoryName }.mapValues { it.value.sumOf { t -> t.amount } }
 
         val entries = ArrayList<PieEntry>()
-        entries.add(PieEntry(5000000f, "Lương"))
-        entries.add(PieEntry(500000f, "Lì xì"))
-        entries.add(PieEntry(1500000f, "Bán đồ"))
-        entries.add(PieEntry(8000000f, "Thưởng"))
+        for ((category, amount) in incomesByCategory) {
+            if (amount > 0) entries.add(PieEntry(amount.toFloat(), category))
+        }
 
         val dataSet = PieDataSet(entries, "")
-        val colors = listOf(
-            Color.parseColor("#4CAF50"), // Xanh lá
-            Color.parseColor("#8BC34A"), // Xanh mạ
-            Color.parseColor("#CDDC39"), // Vàng chanh
-            Color.parseColor("#009688")  // Xanh ngọc
-        )
+        val colorsStr = listOf("#4CAF50", "#8BC34A", "#CDDC39", "#009688", "#00BCD4", "#3F51B5", "#9C27B0")
+        val colors = entries.indices.map { Color.parseColor(colorsStr[it % colorsStr.size]) }
         dataSet.colors = colors
         dataSet.valueTextSize = 12f
         dataSet.valueTextColor = Color.WHITE
@@ -174,29 +198,32 @@ class MainActivity : AppCompatActivity() {
         pieChart.isDrawHoleEnabled = true
         pieChart.holeRadius = 50f
         pieChart.setTransparentCircleAlpha(0)
-        pieChart.centerText = "Tổng Thu\n+ 15.000.000 đ"
+        val formatter = java.text.DecimalFormat("#,###")
+        val formattedTot = formatter.format(totalIncome).replace(",", ".")
+        pieChart.centerText = "Tổng Thu\n+ $formattedTot đ"
         pieChart.setCenterTextSize(14f)
         pieChart.setCenterTextColor(Color.parseColor("#4CAF50"))
         pieChart.legend.isEnabled = false
         
-        pieChart.animateY(800)
+        pieChart.animateY(500)
 
-        // Cập nhật Legend cho Thu
-        updateLegend(entries, colors, "Tổng Thu", "+ 15.000.000 đ", Color.parseColor("#4CAF50"))
+        updateLegend(entries, colors, "Tổng Thu", "+ $formattedTot đ", Color.parseColor("#4CAF50"))
     }
 
     private fun setupPieChartTotal() {
         val pieChart = findViewById<PieChart>(R.id.pieChart)
+        val totalIncome = currentTransactions.filter { it.type == "INCOME" }.sumOf { it.amount }
+        val totalExpense = currentTransactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
 
         val entries = ArrayList<PieEntry>()
-        entries.add(PieEntry(15000000f, "Thu nhập"))
-        entries.add(PieEntry(275000f, "Chi tiêu"))
+        if (totalIncome > 0) entries.add(PieEntry(totalIncome.toFloat(), "Thu nhập"))
+        if (totalExpense > 0) entries.add(PieEntry(totalExpense.toFloat(), "Chi tiêu"))
 
         val dataSet = PieDataSet(entries, "")
-        val colors = listOf(
-            Color.parseColor("#4CAF50"), // Xanh lá mơn mởn (Thu)
-            Color.parseColor("#F44336")  // Đỏ rực rỡ (Chi)
-        )
+        val colors = ArrayList<Int>()
+        if (totalIncome > 0) colors.add(Color.parseColor("#4CAF50"))
+        if (totalExpense > 0) colors.add(Color.parseColor("#F44336"))
+        
         dataSet.colors = colors
         dataSet.valueTextSize = 14f
         dataSet.valueTextColor = Color.WHITE
@@ -206,15 +233,22 @@ class MainActivity : AppCompatActivity() {
         pieChart.isDrawHoleEnabled = true
         pieChart.holeRadius = 50f
         pieChart.setTransparentCircleAlpha(0)
-        pieChart.centerText = "Số dư dương\n+ 14.725.000 đ"
+        
+        val formatter = java.text.DecimalFormat("#,###")
+        val diff = totalIncome - totalExpense
+        val formattedDiff = formatter.format(Math.abs(diff)).replace(",", ".")
+        val prefix = if (diff >= 0) "Số dư dương\n+" else "Số dư âm\n-"
+        val colorNet = if (diff >= 0) Color.parseColor("#4CAF50") else Color.parseColor("#F44336")
+        
+        pieChart.centerText = "$prefix $formattedDiff đ"
         pieChart.setCenterTextSize(12f)
-        pieChart.setCenterTextColor(Color.parseColor("#4CAF50")) // Ở đây Dư nên nó màu XANH
+        pieChart.setCenterTextColor(colorNet)
         pieChart.legend.isEnabled = false
         
-        pieChart.animateY(800)
+        pieChart.animateY(500)
 
-        // Cập nhật Legend cho Tổng
-        updateLegend(entries, colors, "Còn Dư", "+ 14.725.000 đ", Color.parseColor("#4CAF50"))
+        val prefixShort = if (diff >= 0) "+" else "-"
+        updateLegend(entries, colors, "Còn Dư", "$prefixShort $formattedDiff đ", colorNet)
     }
 
     // Hàm kiến trúc chuyên dựng Layout Cột Bảng Chi Tiết (Legend) bên Trái

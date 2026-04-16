@@ -9,9 +9,9 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.app.qlct.data.database.AppDatabase
+import com.app.qlct.data.AppDatabase
 import com.app.qlct.data.entity.Transaction
-import com.app.qlct.data.repository.TransactionRepository
+import com.app.qlct.data.TransactionRepository
 import com.app.qlct.presentation.viewmodel.TransactionViewModel
 import com.app.qlct.presentation.viewmodel.TransactionViewModelFactory
 import com.google.android.material.button.MaterialButton

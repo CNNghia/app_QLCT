@@ -1,4 +1,4 @@
-package com.app.qlct.data.repository
+package com.app.qlct.data
 
 import com.app.qlct.data.dao.TransactionDao
 import com.app.qlct.data.entity.Transaction

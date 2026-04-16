@@ -10,8 +10,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.app.qlct.data.database.AppDatabase
-import com.app.qlct.data.repository.TransactionRepository
+import com.app.qlct.data.AppDatabase
+import com.app.qlct.data.TransactionRepository
 import com.app.qlct.presentation.viewmodel.TransactionViewModel
 import com.app.qlct.presentation.viewmodel.TransactionViewModelFactory
 import java.text.DecimalFormat

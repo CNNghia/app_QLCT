@@ -2,7 +2,7 @@ package com.app.qlct.presentation.viewmodel
 
 import androidx.lifecycle.*
 import com.app.qlct.data.entity.Transaction
-import com.app.qlct.data.repository.TransactionRepository
+import com.app.qlct.data.TransactionRepository
 import kotlinx.coroutines.launch
 
 class TransactionViewModel(private val repository: TransactionRepository) : ViewModel() {

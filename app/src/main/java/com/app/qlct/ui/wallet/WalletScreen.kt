@@ -1,16 +1,20 @@
 package com.app.qlct.ui.wallet
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -32,26 +36,10 @@ fun WalletScreen(
     val wallets by viewModel.wallets.collectAsStateWithLifecycle()
     val totalBalance by viewModel.totalBalance.collectAsStateWithLifecycle()
 
-    // Trạng thái dialog
     var showAddDialog by remember { mutableStateOf(false) }
     var walletToEdit by remember { mutableStateOf<Wallet?>(null) }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Quản lý ví",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            )
-        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddDialog = true },
@@ -68,9 +56,9 @@ fun WalletScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(bottom = innerPadding.calculateBottomPadding())
         ) {
-            // ── Banner tổng số dư ──────────────────────────────────────
+            // ── Banner tổng số dư kiêm Header ─────────────────────────────────────
             TotalBalanceBanner(totalBalance = totalBalance)
 
             // ── Danh sách ví ──────────────────────────────────────────
@@ -85,7 +73,7 @@ fun WalletScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .weight(1f),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 24.dp), // Thêm khoảng cách với Banner
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(
@@ -108,7 +96,6 @@ fun WalletScreen(
         }
     }
 
-    // Dialog Thêm ví
     if (showAddDialog) {
         AddEditWalletDialog(
             wallet = null,
@@ -120,7 +107,6 @@ fun WalletScreen(
         )
     }
 
-    // Dialog Sửa ví
     walletToEdit?.let { wallet ->
         AddEditWalletDialog(
             wallet = wallet,
@@ -141,39 +127,55 @@ fun WalletScreen(
 private fun TotalBalanceBanner(totalBalance: Double) {
     val formatted = remember(totalBalance) {
         val format = NumberFormat.getNumberInstance(Locale("vi", "VN"))
-        format.format(totalBalance) + " VND"
+        format.format(totalBalance) + " đ"
     }
 
     Surface(
-        color = MaterialTheme.colorScheme.primaryContainer,
-        tonalElevation = 2.dp
+        color = MaterialTheme.colorScheme.primary, // Lấy màu Xanh tràn nền
+        modifier = Modifier.fillMaxWidth(),
+        shape = RectangleShape
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 20.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.List,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(22.dp)
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 24.dp, end = 24.dp, top = 48.dp, bottom = 48.dp) // Top padding đóng vai trò đẩy status bar
+            ) {
+                Text(
+                    text = "Xin chào!",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color.White
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "Tổng số dư",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = Color.White.copy(alpha = 0.9f)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = formatted,
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
             }
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = formatted,
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
+            
+            // Nút Menu tròn bên phải lơ lửng
+            IconButton(
+                onClick = { /* TODO: Toggle Menu */ },
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 24.dp, top = 24.dp) // Căn chỉnh để ngang hàng với chữ Tổng số dư
+                    .size(48.dp)
+                    .background(Color.White.copy(alpha = 0.3f), shape = androidx.compose.foundation.shape.CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Menu",
+                    tint = Color.White
+                )
+            }
         }
     }
 }
@@ -186,7 +188,7 @@ private fun EmptyWalletPlaceholder(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            imageVector = Icons.Default.List,
+            imageVector = Icons.Default.List, // Cần import
             contentDescription = null,
             modifier = Modifier.size(80.dp),
             tint = MaterialTheme.colorScheme.outlineVariant

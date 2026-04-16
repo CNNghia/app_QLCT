@@ -3,8 +3,8 @@ package com.app.qlct.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.app.qlct.data.local.AppDatabase
-import com.app.qlct.data.repository.WalletRepository
+import com.app.qlct.data.AppDatabase
+import com.app.qlct.data.WalletRepository
 import com.app.qlct.model.Wallet
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

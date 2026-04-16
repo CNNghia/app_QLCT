@@ -56,6 +56,10 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.mpchart)
     implementation(libs.facebook.shimmer)
+    implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     
     // Room
     implementation(libs.androidx.room.runtime)

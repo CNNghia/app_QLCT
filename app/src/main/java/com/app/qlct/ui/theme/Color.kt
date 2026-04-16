@@ -2,6 +2,14 @@ package com.app.qlct.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+val ColorPrimary = Color(0xFF4CAF50)
+val ColorPrimaryVariant = Color(0xFF388E3C)
+val ColorSecondary = Color(0xFF03DAC5)
+val ColorBackground = Color(0xFFF5F5F5)    
+val ColorSurface = Color(0xFFFFFFFF)
+val TextColorPrimary = Color(0xFF212121)
+val TextColorSecondary = Color(0xFF757575)
+
 val Purple80 = Color(0xFFD0BCFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)
 val Pink80 = Color(0xFFEFB8C8)
