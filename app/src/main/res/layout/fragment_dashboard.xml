@@ -60,6 +60,26 @@
                 tools:text="14.725.000 đ" />
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/btnOpenReport"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="12dp"
+                app:cardBackgroundColor="#33FFFFFF"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="0dp"
+                app:layout_constraintBottom_toBottomOf="@+id/tvTotalBalance"
+                app:layout_constraintEnd_toStartOf="@+id/btnOpenWallet"
+                app:layout_constraintTop_toTopOf="@+id/tvGreeting">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_chart"
+                    app:tint="@color/white" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/btnOpenWallet"
                 android:layout_width="48dp"
                 android:layout_height="48dp"

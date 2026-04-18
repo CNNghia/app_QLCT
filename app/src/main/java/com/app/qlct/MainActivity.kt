@@ -63,6 +63,13 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        // Bắt sự kiện icon báo cáo -> Phóng qua màn hình Báo Cáo (Summary Report)
+        val btnOpenReport = findViewById<View>(R.id.btnOpenReport)
+        btnOpenReport.setOnClickListener {
+            val intent = android.content.Intent(this, SummaryReportActivity::class.java)
+            startActivity(intent)
+        }
+
         // Bắt sự kiện chữ "XEM TẤT CẢ" -> Mở Màn hình Danh sách Giao Dịch
         val tvViewAll = findViewById<TextView>(R.id.tvViewAll)
         tvViewAll.setOnClickListener {
