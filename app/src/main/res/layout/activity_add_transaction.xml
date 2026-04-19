@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Anh: Màn hình Thêm/Chỉnh sửa giao dịch -->
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -21,7 +22,7 @@
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Thêm giao dịch"
+        android:text="@string/title_add_transaction"
         android:textColor="@color/textColorPrimary"
         android:textSize="18sp"
         android:textStyle="bold"
@@ -34,7 +35,7 @@
         style="@style/Widget.MaterialComponents.Button.TextButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="LƯU"
+        android:text="@string/btn_save"
         android:textColor="@color/colorPrimary"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
@@ -58,7 +59,7 @@
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="THU NHẬP"
+            android:text="@string/type_income"
             android:textColor="#4CAF50" />
 
         <com.google.android.material.button.MaterialButton
@@ -66,7 +67,7 @@
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="CHI TIÊU"
+            android:text="@string/type_expense"
             android:textColor="#F44336" />
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
@@ -83,7 +84,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="SỐ TIỀN"
+            android:text="@string/label_amount"
             android:textColor="@color/textColorSecondary"
             android:textStyle="bold"
             android:letterSpacing="0.1" />
@@ -107,7 +108,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="VNĐ"
+            android:text="@string/currency_vnd"
             android:textColor="@color/textColorSecondary"
             android:textSize="20sp" />
     </LinearLayout>
@@ -133,7 +134,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=" DANH MỤC "
+                android:text="@string/label_category"
                 android:background="#E8E8E8"
                 android:paddingHorizontal="6dp"
                 android:paddingVertical="2dp"
@@ -167,7 +168,7 @@
                     android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
-                    android:text="Chọn danh mục"
+                    android:text="@string/hint_select_category"
                     android:textColor="@color/textColorPrimary"
                     android:textSize="20sp"
                     android:textStyle="bold" />
@@ -190,7 +191,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=" GHI CHÚ "
+                android:text="@string/label_note"
                 android:background="#E8E8E8"
                 android:paddingHorizontal="6dp"
                 android:paddingVertical="2dp"
@@ -203,7 +204,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@null"
-                android:hint="Nhập diễn giải cho chi tiêu này..."
+                android:hint="@string/hint_note"
                 android:paddingVertical="8dp"
                 android:textSize="16sp"
                 android:textColor="@color/textColorPrimary" />
@@ -233,7 +234,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text=" THỜI GIAN "
+                        android:text="@string/label_time"
                         android:background="#E8E8E8"
                         android:paddingHorizontal="6dp"
                         android:paddingVertical="2dp"
@@ -251,7 +252,7 @@
                             android:id="@+id/tvSelectedDateText"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Hôm nay"
+                            android:text="@string/today"
                             android:textColor="@color/textColorPrimary"
                             android:textStyle="bold"
                             android:textSize="16sp" />
@@ -284,7 +285,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text=" NGUỒN TIỀN "
+                        android:text="@string/label_wallet"
                         android:background="#E8E8E8"
                         android:paddingHorizontal="6dp"
                         android:paddingVertical="2dp"
@@ -302,7 +303,7 @@
                             android:id="@+id/tvWalletName"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Ví Tiền Mặt"
+                            android:text="@string/default_wallet_name"
                             android:textColor="@color/textColorPrimary"
                             android:textStyle="bold"
                             android:textSize="16sp" />

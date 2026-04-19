@@ -22,10 +22,12 @@ class TransactionsActivity : AppCompatActivity() {
     private var currentMonth = Calendar.getInstance().get(Calendar.MONTH) + 1
     private var currentYear = Calendar.getInstance().get(Calendar.YEAR)
     
+    // Anh: Khởi tạo các thành phần MVVM để quản lý dữ liệu giao dịch
     private val database by lazy { AppDatabase.getDatabase(this) }
     private val repository by lazy { TransactionRepository(database.transactionDao()) }
+    private val walletRepository by lazy { com.app.qlct.data.WalletRepository(database.walletDao()) }
     private val viewModel: TransactionViewModel by viewModels {
-        TransactionViewModelFactory(repository)
+        TransactionViewModelFactory(repository, walletRepository)
     }
 
     private lateinit var adapter: TransactionAdapter
@@ -58,7 +60,7 @@ class TransactionsActivity : AppCompatActivity() {
         rvTransactions.layoutManager = LinearLayoutManager(this)
         adapter = TransactionAdapter(
             onItemClick = { transaction ->
-                // Khi nhấn: Mở màn hình Sửa
+                // Anh: Khi nhấn vào một item: Mở màn hình Sửa với dữ liệu cũ
                 val intent = android.content.Intent(this, AddTransactionActivity::class.java).apply {
                     putExtra("TRANSACTION_ID", transaction.id)
                     putExtra("AMOUNT", transaction.amount)
@@ -71,7 +73,7 @@ class TransactionsActivity : AppCompatActivity() {
                 startActivity(intent)
             },
             onItemLongClick = { transaction ->
-                // Khi nhấn giữ: Hiện thông báo xác nhận Xóa
+                // Anh: Khi nhấn giữ: Hiện thông báo xác nhận Xóa và cập nhật lại số dư ví
                 androidx.appcompat.app.AlertDialog.Builder(this)
                     .setTitle("Xóa giao dịch")
                     .setMessage("Bạn có chắc chắn muốn xóa giao dịch này không?")
@@ -118,6 +120,7 @@ class TransactionsActivity : AppCompatActivity() {
     }
 
     private fun loadData() {
+        // Anh: Tải dữ liệu giao dịch từ ViewModel dựa trên tháng và bộ lọc loại (Thu/Chi)
         val layoutLoading = findViewById<View>(R.id.layoutLoading)
         val layoutEmpty = findViewById<View>(R.id.layoutEmpty)
         val rvTransactions = findViewById<RecyclerView>(R.id.rvAllTransactions)

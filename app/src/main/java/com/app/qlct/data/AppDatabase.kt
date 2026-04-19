@@ -7,10 +7,11 @@ import com.app.qlct.data.local.WalletDao
 import com.app.qlct.data.entity.Transaction
 import com.app.qlct.model.Wallet
 
-@Database(entities = [Transaction::class, Wallet::class], version = 1, exportSchema = false)
+@Database(entities = [Transaction::class, Wallet::class, com.app.qlct.data.entity.Category::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun walletDao(): WalletDao
+    abstract fun categoryDao(): com.app.qlct.data.dao.CategoryDao
 
     companion object {
         @Volatile

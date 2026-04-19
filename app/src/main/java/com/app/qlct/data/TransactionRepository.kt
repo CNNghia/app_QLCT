@@ -6,11 +6,15 @@ import kotlinx.coroutines.flow.Flow
 
 class TransactionRepository(private val transactionDao: TransactionDao) {
     
+    // Anh: Dòng dữ liệu quan sát tất cả giao dịch
     val allTransactions: Flow<List<Transaction>> = transactionDao.getAllTransactions()
 
+    // Anh: Phương thức trung gian để thực hiện CRUD qua DAO
     suspend fun insert(transaction: Transaction) {
         transactionDao.insertTransaction(transaction)
     }
+
+    suspend fun getTransactionById(id: Long) = transactionDao.getTransactionById(id)
 
     suspend fun update(transaction: Transaction) {
         transactionDao.updateTransaction(transaction)

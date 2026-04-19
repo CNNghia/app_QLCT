@@ -6,9 +6,11 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TransactionDao {
+    // Anh: Lấy tất cả giao dịch sắp xếp theo ngày mới nhất
     @Query("SELECT * FROM transactions ORDER BY date DESC")
     fun getAllTransactions(): Flow<List<Transaction>>
 
+    // Anh: Thêm mới một giao dịch
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransaction(transaction: Transaction)
 
@@ -26,4 +28,7 @@ interface TransactionDao {
 
     @Query("SELECT * FROM transactions WHERE type = :type AND date >= :start AND date <= :end ORDER BY date DESC")
     fun getTransactionsByTypeAndDateRange(type: String, start: Long, end: Long): Flow<List<Transaction>>
+
+    @Query("SELECT * FROM transactions WHERE id = :id")
+    suspend fun getTransactionById(id: Long): Transaction?
 }

@@ -14,6 +14,9 @@ interface WalletDao {
     @Query("SELECT * FROM wallets ORDER BY createdAt DESC")
     fun getAllWallets(): Flow<List<Wallet>>
 
+    @Query("SELECT * FROM wallets")
+    suspend fun getWalletsOnce(): List<Wallet>
+
     @Query("SELECT * FROM wallets WHERE id = :id")
     suspend fun getWalletById(id: Int): Wallet?
 
@@ -25,6 +28,9 @@ interface WalletDao {
 
     @Delete
     suspend fun deleteWallet(wallet: Wallet)
+
+    @Query("SELECT * FROM wallets WHERE name = :name")
+    suspend fun getWalletByName(name: String): Wallet?
 
     @Query("SELECT SUM(balance) FROM wallets")
     fun getTotalBalance(): Flow<Double?>

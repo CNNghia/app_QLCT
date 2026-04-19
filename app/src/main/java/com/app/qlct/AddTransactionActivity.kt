@@ -20,10 +20,12 @@ import java.util.*
 
 class AddTransactionActivity : AppCompatActivity() {
 
+    // Anh: Khởi tạo database, repository và viewModel theo mô hình MVVM
     private val database by lazy { AppDatabase.getDatabase(this) }
     private val repository by lazy { TransactionRepository(database.transactionDao()) }
+    private val walletRepository by lazy { com.app.qlct.data.WalletRepository(database.walletDao()) }
     private val viewModel: TransactionViewModel by viewModels {
-        TransactionViewModelFactory(repository)
+        TransactionViewModelFactory(repository, walletRepository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,7 +45,7 @@ class AddTransactionActivity : AppCompatActivity() {
 
         btnClose.setOnClickListener { finish() }
 
-        // Xử lý chọn Danh mục
+        // Anh: Xử lý chọn Danh mục thu/chi dựa trên loại giao dịch hiện tại
         btnSelectCategory.setOnClickListener {
             val isIncome = toggleTransactionType.checkedButtonId == R.id.btnTypeIncome
             val categories = if (isIncome) {
@@ -124,7 +126,7 @@ class AddTransactionActivity : AppCompatActivity() {
             findViewById<TextView>(R.id.tvTitle).text = "Sửa giao dịch"
         }
 
-        // Xử lý nút LƯU với Validation
+        // Anh: Xử lý nút LƯU với Validation và cập nhật vào Database (bao gồm cả cập nhật số dư ví)
         btnSave.setOnClickListener {
             val amountStr = etAmount.text.toString().trim()
             val note = etNote.text.toString().trim()

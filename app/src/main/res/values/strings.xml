@@ -1,3 +1,25 @@
 <resources>
     <string name="app_name">app_QLCT</string>
+    
+    <!-- Anh: Màn hình Thêm Giao Dịch -->
+    <string name="title_add_transaction">Thêm giao dịch</string>
+    <string name="btn_save">LƯU</string>
+    <string name="type_income">THU NHẬP</string>
+    <string name="type_expense">CHI TIÊU</string>
+    <string name="label_amount">SỐ TIỀN</string>
+    <string name="currency_vnd">VNĐ</string>
+    <string name="label_category"> DANH MỤC </string>
+    <string name="hint_select_category">Chọn danh mục</string>
+    <string name="label_note"> GHI CHÚ </string>
+    <string name="hint_note">Nhập diễn giải cho chi tiêu này...</string>
+    <string name="label_time"> THỜI GIAN </string>
+    <string name="today">Hôm nay</string>
+    <string name="label_wallet"> NGUỒN TIỀN </string>
+    <string name="default_wallet_name">Ví Tiền Mặt</string>
+
+    <!-- Anh: Màn hình Danh sách Giao Dịch -->
+    <string name="title_transactions">Giao Dịch</string>
+    <string name="label_income_summary">TIỀN VÀO</string>
+    <string name="label_expense_summary">TIỀN RA</string>
+    <string name="label_net_summary">TỔNG KẾT</string>
 </resources>

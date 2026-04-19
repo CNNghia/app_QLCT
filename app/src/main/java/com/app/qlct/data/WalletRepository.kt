@@ -12,9 +12,13 @@ class WalletRepository(private val walletDao: WalletDao) {
 
     val allWallets: Flow<List<Wallet>> = walletDao.getAllWallets()
 
+    suspend fun getWalletsOnce(): List<Wallet> = walletDao.getWalletsOnce()
+
     val totalBalance: Flow<Double?> = walletDao.getTotalBalance()
 
     suspend fun getWalletById(id: Int): Wallet? = walletDao.getWalletById(id)
+    
+    suspend fun getWalletByName(name: String): Wallet? = walletDao.getWalletByName(name)
 
     suspend fun insertWallet(wallet: Wallet) = walletDao.insertWallet(wallet)
 

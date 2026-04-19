@@ -29,8 +29,9 @@ class MainActivity : AppCompatActivity() {
 
     private val database by lazy { AppDatabase.getDatabase(this) }
     private val repository by lazy { TransactionRepository(database.transactionDao()) }
+    private val walletRepository by lazy { com.app.qlct.data.WalletRepository(database.walletDao()) }
     private val viewModel: TransactionViewModel by viewModels {
-        TransactionViewModelFactory(repository)
+        TransactionViewModelFactory(repository, walletRepository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
