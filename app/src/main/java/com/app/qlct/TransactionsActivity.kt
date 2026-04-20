@@ -43,6 +43,14 @@ class TransactionsActivity : AppCompatActivity() {
 
         filterType = intent.getStringExtra("TYPE")
 
+        // Bắt giá trị nếu click từ Sơ Lược (Thống Kê) sang màn hình này
+        val targetMonth = intent.getIntExtra("TARGET_MONTH", -1)
+        val targetYear = intent.getIntExtra("TARGET_YEAR", -1)
+        if (targetMonth != -1 && targetYear != -1) {
+            currentMonth = targetMonth
+            currentYear = targetYear
+        }
+
         val toolbar = findViewById<Toolbar>(R.id.toolbarTx)
         toolbar.setNavigationIcon(android.R.drawable.ic_menu_revert)
         toolbar.setNavigationOnClickListener { finish() }
@@ -99,7 +107,7 @@ class TransactionsActivity : AppCompatActivity() {
         loadData()
         
         btnPrevMonth.setOnClickListener {
-            currentMonth++ // Logic check lại: có vẻ bị ngược hoặc user muốn vậy, tôi giữ nguyên logic business cũ
+            currentMonth-- 
             if (currentMonth < 1) {
                 currentMonth = 12
                 currentYear--

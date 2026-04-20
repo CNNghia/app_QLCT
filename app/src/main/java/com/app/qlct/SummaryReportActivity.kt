@@ -1,34 +1,34 @@
 package com.app.qlct
 
-import android.graphics.Color
+import android.content.Intent
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
-import android.widget.ImageButton
-import android.widget.LinearLayout
+import android.view.ViewGroup
 import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.app.qlct.data.AppDatabase
+import com.app.qlct.data.CategoryRepository
 import com.app.qlct.data.TransactionRepository
 import com.app.qlct.data.WalletRepository
-import com.app.qlct.data.CategoryRepository
-import com.app.qlct.data.entity.Transaction
 import com.app.qlct.presentation.viewmodel.TransactionViewModel
 import com.app.qlct.presentation.viewmodel.TransactionViewModelFactory
-import com.github.mikephil.charting.charts.PieChart
-import com.github.mikephil.charting.data.PieData
-import com.github.mikephil.charting.data.PieDataSet
-import com.github.mikephil.charting.data.PieEntry
-import com.google.android.material.card.MaterialCardView
 import java.text.DecimalFormat
-import java.util.*
+import java.util.Calendar
+
+data class MonthSummary(
+    val year: Int,
+    val month: Int,
+    var totalIncome: Double = 0.0,
+    var totalExpense: Double = 0.0
+) {
+    val balance: Double get() = totalIncome - totalExpense
+}
 
 class SummaryReportActivity : AppCompatActivity() {
-
-    private val currentMonthCal: Calendar = Calendar.getInstance()
-    private var allTransactions: List<Transaction> = emptyList()
 
     private val database by lazy { AppDatabase.getDatabase(this) }
     private val repository by lazy { TransactionRepository(database.transactionDao()) }
@@ -39,7 +39,8 @@ class SummaryReportActivity : AppCompatActivity() {
         TransactionViewModelFactory(repository, walletRepository, categoryRepository)
     }
 
-    private lateinit var adapter: TransactionAdapter
+    private val summaryList = mutableListOf<MonthSummary>()
+    private lateinit var adapter: SummaryAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,160 +49,83 @@ class SummaryReportActivity : AppCompatActivity() {
         val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
         toolbar.setNavigationOnClickListener { finish() }
 
-        val rvReportTransactions = findViewById<RecyclerView>(R.id.rvReportTransactions)
-        rvReportTransactions.layoutManager = LinearLayoutManager(this)
-        adapter = TransactionAdapter(onItemClick = {}, onItemLongClick = {})
-        rvReportTransactions.adapter = adapter
-
-        val btnPrevMonth = findViewById<ImageButton>(R.id.btnPrevMonth)
-        val btnNextMonth = findViewById<ImageButton>(R.id.btnNextMonth)
-
-        btnPrevMonth.setOnClickListener {
-            currentMonthCal.add(Calendar.MONTH, -1)
-            updateMonthDisplay()
-            filterAndCalculate()
+        val rvSummaryList = findViewById<RecyclerView>(R.id.rvSummaryList)
+        rvSummaryList.layoutManager = LinearLayoutManager(this)
+        
+        adapter = SummaryAdapter(summaryList) { summary ->
+            // Bấm vào 1 Cột Tháng thì chuyển qua trang Danh sách Giao Dịch của đúng tháng đó
+            val intent = Intent(this, TransactionsActivity::class.java).apply {
+                putExtra("TARGET_MONTH", summary.month)
+                putExtra("TARGET_YEAR", summary.year)
+            }
+            startActivity(intent)
         }
-
-        btnNextMonth.setOnClickListener {
-            currentMonthCal.add(Calendar.MONTH, 1)
-            updateMonthDisplay()
-            filterAndCalculate()
-        }
+        rvSummaryList.adapter = adapter
 
         viewModel.allTransactions.observe(this) { transactions ->
             if (transactions != null) {
-                allTransactions = transactions
-                updateMonthDisplay()
-                filterAndCalculate()
+                // Nhóm tất cả giao dịch theo Từng Tháng và tính tổng Thu/Chi
+                val map = mutableMapOf<Pair<Int, Int>, MonthSummary>()
+                
+                transactions.forEach { trans ->
+                    val cal = Calendar.getInstance()
+                    cal.timeInMillis = trans.date
+                    val year = cal.get(Calendar.YEAR)
+                    val month = cal.get(Calendar.MONTH) + 1
+                    
+                    val key = Pair(year, month)
+                    val summary = map.getOrPut(key) { MonthSummary(year, month) }
+                    
+                    if (trans.type == "INCOME") {
+                        summary.totalIncome += trans.amount
+                    } else {
+                        summary.totalExpense += trans.amount
+                    }
+                }
+                
+                summaryList.clear()
+                // Xếp từ Tháng mới nhất trở về trước
+                summaryList.addAll(map.values.sortedWith(compareByDescending<MonthSummary> { it.year }.thenByDescending { it.month }))
+                adapter.notifyDataSetChanged()
             }
         }
     }
 
-    private fun updateMonthDisplay() {
-        val tvCurrentMonth = findViewById<TextView>(R.id.tvCurrentMonth)
-        val month = currentMonthCal.get(Calendar.MONTH) + 1
-        val year = currentMonthCal.get(Calendar.YEAR)
-        tvCurrentMonth.text = "Tháng $month/$year"
-    }
+    inner class SummaryAdapter(
+        private val list: List<MonthSummary>,
+        private val onClick: (MonthSummary) -> Unit
+    ) : RecyclerView.Adapter<SummaryAdapter.ViewHolder>() {
 
-    private fun filterAndCalculate() {
-        val filteredList = allTransactions.filter { 
-            val transCal = Calendar.getInstance()
-            transCal.timeInMillis = it.date
-            transCal.get(Calendar.YEAR) == currentMonthCal.get(Calendar.YEAR) &&
-            transCal.get(Calendar.MONTH) == currentMonthCal.get(Calendar.MONTH)
-        }.sortedByDescending { it.date }
+        inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+            val tvMonthTitle = view.findViewById<TextView>(R.id.tvMonthTitle)
+            val tvIncome = view.findViewById<TextView>(R.id.tvIncome)
+            val tvExpense = view.findViewById<TextView>(R.id.tvExpense)
+            val tvTotal = view.findViewById<TextView>(R.id.tvTotal)
 
-        val tvEmptyReport = findViewById<TextView>(R.id.tvEmptyReport)
-        val rvReportTransactions = findViewById<RecyclerView>(R.id.rvReportTransactions)
+            fun bind(item: MonthSummary) {
+                val monthNames = arrayOf("Một", "Hai", "Ba", "Tư", "Năm", "Sáu", "Bảy", "Tám", "Chín", "Mười", "Mười Một", "Mười Hai")
+                val monthName = monthNames.getOrNull(item.month - 1) ?: item.month.toString()
+                
+                tvMonthTitle.text = "Tháng $monthName ${item.year}"
+                
+                val df = DecimalFormat("#,###")
+                tvIncome.text = df.format(item.totalIncome).replace(",", ".") + " đ"
+                tvExpense.text = df.format(item.totalExpense).replace(",", ".") + " đ"
+                tvTotal.text = df.format(item.balance).replace(",", ".") + " đ"
 
-        if (filteredList.isEmpty()) {
-            tvEmptyReport.visibility = View.VISIBLE
-            rvReportTransactions.visibility = View.GONE
-        } else {
-            tvEmptyReport.visibility = View.GONE
-            rvReportTransactions.visibility = View.VISIBLE
-        }
-        
-        adapter.submitList(filteredList)
-
-        val totalIncome = filteredList.filter { it.type == "INCOME" }.sumOf { it.amount }
-        val totalExpense = filteredList.filter { it.type == "EXPENSE" }.sumOf { it.amount }
-        val balance = totalIncome - totalExpense
-
-        val formatter = DecimalFormat("#,###")
-        val tvReportIncome = findViewById<TextView>(R.id.tvReportIncome)
-        val tvReportExpense = findViewById<TextView>(R.id.tvReportExpense)
-        val tvReportBalance = findViewById<TextView>(R.id.tvReportBalance)
-
-        tvReportIncome.text = if (totalIncome > 0) "+ ${formatter.format(totalIncome).replace(",", ".")} đ" else "0 đ"
-        tvReportExpense.text = if (totalExpense > 0) "- ${formatter.format(totalExpense).replace(",", ".")} đ" else "0 đ"
-        
-        val absBalanceStr = formatter.format(Math.abs(balance)).replace(",", ".")
-        if (balance >= 0) {
-            tvReportBalance.text = "+ $absBalanceStr đ"
-            tvReportBalance.setTextColor(Color.parseColor("#4CAF50"))
-        } else {
-            tvReportBalance.text = "- $absBalanceStr đ"
-            tvReportBalance.setTextColor(Color.parseColor("#F44336"))
+                itemView.setOnClickListener { onClick(item) }
+            }
         }
 
-        drawPieChart(totalIncome, totalExpense)
-    }
-
-    private fun drawPieChart(totalIncome: Double, totalExpense: Double) {
-        val pieChart = findViewById<PieChart>(R.id.reportPieChart)
-        val entries = ArrayList<PieEntry>()
-        val colors = ArrayList<Int>()
-
-        if (totalIncome > 0) {
-            entries.add(PieEntry(totalIncome.toFloat(), "Thu nhập"))
-            colors.add(Color.parseColor("#4CAF50"))
-        }
-        if (totalExpense > 0) {
-            entries.add(PieEntry(totalExpense.toFloat(), "Chi tiêu"))
-            colors.add(Color.parseColor("#F44336"))
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_summary_month, parent, false)
+            return ViewHolder(view)
         }
 
-        if (entries.isEmpty()) {
-            pieChart.clear()
-            pieChart.centerText = "Không có dữ liệu gốc"
-            pieChart.setCenterTextSize(12f)
-            pieChart.setCenterTextColor(Color.GRAY)
-            val layoutReportLegend = findViewById<LinearLayout>(R.id.layoutReportLegend)
-            layoutReportLegend.removeAllViews()
-            pieChart.invalidate()
-            return
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+            holder.bind(list[position])
         }
 
-        val dataSet = PieDataSet(entries, "")
-        dataSet.colors = colors
-        dataSet.valueTextSize = 14f
-        dataSet.valueTextColor = Color.WHITE
-
-        pieChart.data = PieData(dataSet)
-        pieChart.description.isEnabled = false
-        pieChart.isDrawHoleEnabled = true
-        pieChart.holeRadius = 50f
-        pieChart.setTransparentCircleAlpha(0)
-        
-        val diff = totalIncome - totalExpense
-        val formatter = DecimalFormat("#,###")
-        val formattedDiff = formatter.format(Math.abs(diff)).replace(",", ".")
-        val prefix = if (diff >= 0) "Chênh lệch\n+" else "Chênh lệch\n-"
-        val colorNet = if (diff >= 0) Color.parseColor("#4CAF50") else Color.parseColor("#F44336")
-        
-        pieChart.centerText = "$prefix $formattedDiff đ"
-        pieChart.setCenterTextSize(12f)
-        pieChart.setCenterTextColor(colorNet)
-        pieChart.legend.isEnabled = false
-        
-        pieChart.animateY(500)
-        pieChart.invalidate()
-
-        updateLegend(entries, colors)
-    }
-
-    private fun updateLegend(entries: List<PieEntry>, colors: List<Int>) {
-        val layoutLegend = findViewById<LinearLayout>(R.id.layoutReportLegend)
-        layoutLegend.removeAllViews()
-
-        for (i in entries.indices) {
-            val entry = entries[i]
-            val color = colors[i]
-            val row = layoutInflater.inflate(R.layout.item_chart_legend, layoutLegend, false)
-            val cardIndicator = row.findViewById<MaterialCardView>(R.id.cardIndicator)
-            val tvLabel = row.findViewById<TextView>(R.id.tvLegendLabel)
-            val tvValue = row.findViewById<TextView>(R.id.tvLegendValue)
-
-            cardIndicator.setCardBackgroundColor(color)
-            tvLabel.text = entry.label
-            tvLabel.setTextColor(color)
-            
-            val formatValue = if (entry.value >= 1000000) "${String.format(Locale.US, "%.1f", entry.value / 1000000)}M" else "${String.format(Locale.US, "%.0f", entry.value / 1000)}K"
-            tvValue.text = ": $formatValue"
-            tvValue.setTextColor(color)
-            layoutLegend.addView(row)
-        }
+        override fun getItemCount() = list.size
     }
 }
