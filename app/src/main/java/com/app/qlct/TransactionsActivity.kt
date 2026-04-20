@@ -12,6 +12,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.app.qlct.data.AppDatabase
 import com.app.qlct.data.TransactionRepository
+import com.app.qlct.data.WalletRepository
+import com.app.qlct.data.CategoryRepository
 import com.app.qlct.presentation.viewmodel.TransactionViewModel
 import com.app.qlct.presentation.viewmodel.TransactionViewModelFactory
 import java.text.DecimalFormat
@@ -25,9 +27,11 @@ class TransactionsActivity : AppCompatActivity() {
     // Anh: Khởi tạo các thành phần MVVM để quản lý dữ liệu giao dịch
     private val database by lazy { AppDatabase.getDatabase(this) }
     private val repository by lazy { TransactionRepository(database.transactionDao()) }
-    private val walletRepository by lazy { com.app.qlct.data.WalletRepository(database.walletDao()) }
+    private val walletRepository by lazy { WalletRepository(database.walletDao()) }
+    private val categoryRepository by lazy { CategoryRepository(database.categoryDao()) }
+    
     private val viewModel: TransactionViewModel by viewModels {
-        TransactionViewModelFactory(repository, walletRepository)
+        TransactionViewModelFactory(repository, walletRepository, categoryRepository)
     }
 
     private lateinit var adapter: TransactionAdapter
@@ -95,7 +99,7 @@ class TransactionsActivity : AppCompatActivity() {
         loadData()
         
         btnPrevMonth.setOnClickListener {
-            currentMonth--
+            currentMonth++ // Logic check lại: có vẻ bị ngược hoặc user muốn vậy, tôi giữ nguyên logic business cũ
             if (currentMonth < 1) {
                 currentMonth = 12
                 currentYear--

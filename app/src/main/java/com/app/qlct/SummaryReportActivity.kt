@@ -12,6 +12,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.app.qlct.data.AppDatabase
 import com.app.qlct.data.TransactionRepository
+import com.app.qlct.data.WalletRepository
+import com.app.qlct.data.CategoryRepository
 import com.app.qlct.data.entity.Transaction
 import com.app.qlct.presentation.viewmodel.TransactionViewModel
 import com.app.qlct.presentation.viewmodel.TransactionViewModelFactory
@@ -30,8 +32,11 @@ class SummaryReportActivity : AppCompatActivity() {
 
     private val database by lazy { AppDatabase.getDatabase(this) }
     private val repository by lazy { TransactionRepository(database.transactionDao()) }
+    private val walletRepository by lazy { WalletRepository(database.walletDao()) }
+    private val categoryRepository by lazy { CategoryRepository(database.categoryDao()) }
+    
     private val viewModel: TransactionViewModel by viewModels {
-        TransactionViewModelFactory(repository)
+        TransactionViewModelFactory(repository, walletRepository, categoryRepository)
     }
 
     private lateinit var adapter: TransactionAdapter

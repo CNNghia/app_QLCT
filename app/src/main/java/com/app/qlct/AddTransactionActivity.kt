@@ -12,6 +12,8 @@ import androidx.appcompat.app.AppCompatActivity
 import com.app.qlct.data.AppDatabase
 import com.app.qlct.data.entity.Transaction
 import com.app.qlct.data.TransactionRepository
+import com.app.qlct.data.WalletRepository
+import com.app.qlct.data.CategoryRepository
 import com.app.qlct.presentation.viewmodel.TransactionViewModel
 import com.app.qlct.presentation.viewmodel.TransactionViewModelFactory
 import com.google.android.material.button.MaterialButton
@@ -23,9 +25,11 @@ class AddTransactionActivity : AppCompatActivity() {
     // Anh: Khởi tạo database, repository và viewModel theo mô hình MVVM
     private val database by lazy { AppDatabase.getDatabase(this) }
     private val repository by lazy { TransactionRepository(database.transactionDao()) }
-    private val walletRepository by lazy { com.app.qlct.data.WalletRepository(database.walletDao()) }
+    private val walletRepository by lazy { WalletRepository(database.walletDao()) }
+    private val categoryRepository by lazy { CategoryRepository(database.categoryDao()) }
+    
     private val viewModel: TransactionViewModel by viewModels {
-        TransactionViewModelFactory(repository, walletRepository)
+        TransactionViewModelFactory(repository, walletRepository, categoryRepository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
