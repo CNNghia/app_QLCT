@@ -20,6 +20,8 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import com.app.qlct.data.AppDatabase
 import com.app.qlct.data.TransactionRepository
+import com.app.qlct.data.WalletRepository
+import com.app.qlct.data.CategoryRepository
 import com.app.qlct.presentation.viewmodel.TransactionViewModel
 import com.app.qlct.presentation.viewmodel.TransactionViewModelFactory
 
@@ -29,9 +31,11 @@ class MainActivity : AppCompatActivity() {
 
     private val database by lazy { AppDatabase.getDatabase(this) }
     private val repository by lazy { TransactionRepository(database.transactionDao()) }
-    private val walletRepository by lazy { com.app.qlct.data.WalletRepository(database.walletDao()) }
+    private val walletRepository by lazy { WalletRepository(database.walletDao()) }
+    private val categoryRepository by lazy { CategoryRepository(database.categoryDao()) }
+    
     private val viewModel: TransactionViewModel by viewModels {
-        TransactionViewModelFactory(repository, walletRepository)
+        TransactionViewModelFactory(repository, walletRepository, categoryRepository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,7 +50,6 @@ class MainActivity : AppCompatActivity() {
         titleIncome.text = "Tổng Thu"
         // Bắt đầu lắng nghe tổng số dư từ Wallet Repository
         val tvTotalBalance = findViewById<TextView>(R.id.tvTotalBalance)
-        val walletRepository = com.app.qlct.data.WalletRepository(database.walletDao())
         
         lifecycleScope.launch {
             walletRepository.totalBalance.collect { balance ->
