@@ -67,7 +67,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_calendar -> startActivity(android.content.Intent(this, CalendarActivity::class.java))
                 R.id.nav_faq -> startActivity(android.content.Intent(this, FaqActivity::class.java))
                 R.id.nav_options -> startActivity(android.content.Intent(this, OptionsActivity::class.java))
-                R.id.nav_settings -> Toast.makeText(this, "Thiết lập cài đặt đang cập nhật!", Toast.LENGTH_SHORT).show()
+                R.id.nav_settings -> startActivity(android.content.Intent(this, SettingsActivity::class.java))
             }
             true
         }
