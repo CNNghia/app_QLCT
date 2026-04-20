@@ -12,4 +12,5 @@ class CategoryRepository(private val categoryDao: CategoryDao) {
     fun getCategoriesByType(type: String): Flow<List<Category>> = categoryDao.getCategoriesByType(type)
     
     suspend fun insertCategory(category: Category) = categoryDao.insertCategory(category)
+    suspend fun deleteCategory(category: Category) = categoryDao.deleteCategory(category)
 }

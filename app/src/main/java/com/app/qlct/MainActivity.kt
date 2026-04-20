@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_accounts -> startActivity(android.content.Intent(this, WalletActivity::class.java))
                 R.id.nav_calendar -> startActivity(android.content.Intent(this, CalendarActivity::class.java))
                 R.id.nav_faq -> startActivity(android.content.Intent(this, FaqActivity::class.java))
-                R.id.nav_options -> Toast.makeText(this, "Các tuỳ chọn mở rộng đang cập nhật!", Toast.LENGTH_SHORT).show()
+                R.id.nav_options -> startActivity(android.content.Intent(this, OptionsActivity::class.java))
                 R.id.nav_settings -> Toast.makeText(this, "Thiết lập cài đặt đang cập nhật!", Toast.LENGTH_SHORT).show()
             }
             true
