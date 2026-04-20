@@ -28,6 +28,7 @@
         <activity android:name=".WalletActivity" />
         <activity android:name=".SummaryReportActivity" />
         <activity android:name=".CalendarActivity" />
+        <activity android:name=".FaqActivity" />
     </application>
 
 </manifest>
