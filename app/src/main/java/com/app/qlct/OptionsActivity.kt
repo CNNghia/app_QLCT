@@ -20,7 +20,7 @@ class OptionsActivity : AppCompatActivity() {
         }
 
         findViewById<MaterialCardView>(R.id.cardBudget).setOnClickListener {
-            Toast.makeText(this, "Tính năng Ngân Sách đang được hoàn thiện! Chờ tí nhé", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, BudgetActivity::class.java))
         }
     }
 }

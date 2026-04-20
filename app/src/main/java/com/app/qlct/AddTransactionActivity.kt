@@ -36,6 +36,20 @@ class AddTransactionActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_transaction)
 
+        var currentMonthlyExpenses = 0.0
+        viewModel.allTransactions.observe(this) { transactions ->
+            if (transactions != null) {
+                val cal = Calendar.getInstance()
+                val currentMonth = cal.get(Calendar.MONTH)
+                val currentYear = cal.get(Calendar.YEAR)
+                currentMonthlyExpenses = transactions.filter {
+                    val tc = Calendar.getInstance()
+                    tc.timeInMillis = it.date
+                    it.type == "EXPENSE" && tc.get(Calendar.MONTH) == currentMonth && tc.get(Calendar.YEAR) == currentYear
+                }.sumOf { it.amount }
+            }
+        }
+
         val btnClose = findViewById<ImageView>(R.id.btnClose)
         val btnSave = findViewById<MaterialButton>(R.id.btnSave)
         val etAmount = findViewById<EditText>(R.id.etInputAmount)
@@ -163,14 +177,47 @@ class AddTransactionActivity : AppCompatActivity() {
                 type = type
             )
 
-            if (isEditMode) {
-                viewModel.update(transaction)
-                Toast.makeText(this, "Đã cập nhật giao dịch!", Toast.LENGTH_SHORT).show()
-            } else {
-                viewModel.insert(transaction)
-                Toast.makeText(this, "Đã lưu giao dịch thành công!", Toast.LENGTH_SHORT).show()
+            // Hàm lưu thật sự
+            fun saveRealDataAndFinish() {
+                if (isEditMode) {
+                    viewModel.update(transaction)
+                    Toast.makeText(this@AddTransactionActivity, "Đã cập nhật giao dịch!", Toast.LENGTH_SHORT).show()
+                } else {
+                    viewModel.insert(transaction)
+                    Toast.makeText(this@AddTransactionActivity, "Đã lưu giao dịch thành công!", Toast.LENGTH_SHORT).show()
+                }
+                finish()
             }
-            finish()
+
+            // Gọi ngân sách đã thiết lập (nếu có)
+            val prefs = getSharedPreferences("AppConfig", MODE_PRIVATE)
+            val budgetLimit = prefs.getFloat("BUDGET_LIMIT", 0f).toDouble()
+
+            // Kiểm tra Logic lố tiền nếu là Chi phí
+            if (type == "EXPENSE" && budgetLimit > 0) {
+                // Nếu sửa, ta phải trừ số tiền cũ ra trước khi cộng số tiền mới vào để tính chính xác
+                val oldAmount = if (isEditMode && intent.getStringExtra("TYPE") == "EXPENSE") intent.getDoubleExtra("AMOUNT", 0.0) else 0.0
+                
+                // Mức chi phí trong tháng nếu bill này được duyệt
+                val futureTotalExpense = currentMonthlyExpenses - oldAmount + amount
+
+                if (futureTotalExpense > budgetLimit) {
+                    val overAmount = futureTotalExpense - budgetLimit
+                    val df = java.text.DecimalFormat("#,###")
+                    
+                    AlertDialog.Builder(this@AddTransactionActivity)
+                        .setTitle("Cảnh báo vượt ngân sách \u26A0\uFE0F")
+                        .setMessage("Bạn đã thiết lập ngân sách tháng này, khoản chi tiêu này sẽ khiến bạn vượt lố mất ${df.format(overAmount).replace(",", ".")} đ. \n\nBạn vẫn có muốn chấp nhận chi tiêu khoản tiền này hay không?")
+                        .setPositiveButton("Vẫn chi") { _, _ -> saveRealDataAndFinish() }
+                        .setNegativeButton("Hủy bỏ", null)
+                        .setCancelable(false)
+                        .show()
+                    return@setOnClickListener
+                }
+            }
+
+            // Nếu an toàn không lố ngân sách => Lưu luôn
+            saveRealDataAndFinish()
         }
     }
 }
