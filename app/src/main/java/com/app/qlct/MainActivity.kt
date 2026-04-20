@@ -90,20 +90,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Bắt sự kiện icon góc phải trên cùng Dashboard -> Phóng qua màn hình VÍ
-        val btnOpenWallet = findViewById<View>(R.id.btnOpenWallet)
-        btnOpenWallet.setOnClickListener {
-            val intent = android.content.Intent(this, WalletActivity::class.java)
-            startActivity(intent)
-        }
-
-        // Bắt sự kiện icon báo cáo -> Phóng qua màn hình Báo Cáo (Summary Report)
-        val btnOpenReport = findViewById<View>(R.id.btnOpenReport)
-        btnOpenReport.setOnClickListener {
-            val intent = android.content.Intent(this, SummaryReportActivity::class.java)
-            startActivity(intent)
-        }
-
         // Bắt sự kiện chữ "XEM TẤT CẢ" -> Mở Màn hình Danh sách Giao Dịch
         val tvViewAll = findViewById<TextView>(R.id.tvViewAll)
         tvViewAll.setOnClickListener {

@@ -19,8 +19,16 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Phiên bản miễn phí"
+        android:text="Xin chào, Chủ Nhân!"
         android:textColor="@android:color/white"
         android:textSize="18sp"
         android:textStyle="bold" />
+    
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Quản lý chi tiêu thông minh"
+        android:textColor="#E0E0E0"
+        android:textSize="14sp" />
 </LinearLayout>
