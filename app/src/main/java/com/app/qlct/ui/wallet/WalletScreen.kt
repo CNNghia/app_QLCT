@@ -9,6 +9,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.ArrowBack
+import android.app.Activity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -129,6 +132,7 @@ private fun TotalBalanceBanner(totalBalance: Double) {
         val format = NumberFormat.getNumberInstance(Locale("vi", "VN"))
         format.format(totalBalance) + " đ"
     }
+    val context = LocalContext.current
 
     Surface(
         color = MaterialTheme.colorScheme.primary, // Lấy màu Xanh tràn nền
@@ -136,10 +140,26 @@ private fun TotalBalanceBanner(totalBalance: Double) {
         shape = RectangleShape
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
+            
+            // Nút Quay Lại lơ lửng góc trái
+            IconButton(
+                onClick = { (context as? Activity)?.finish() },
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = 16.dp, top = 40.dp)
+                    .size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Quay lại",
+                    tint = Color.White
+                )
+            }
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 24.dp, end = 24.dp, top = 48.dp, bottom = 48.dp) // Top padding đóng vai trò đẩy status bar
+                    .padding(start = 72.dp, end = 24.dp, top = 48.dp, bottom = 48.dp) // Thêm start padding để nhường chỗ cho nút Back
             ) {
                 Text(
                     text = "Xin chào!",

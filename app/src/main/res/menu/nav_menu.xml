@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item android:id="@+id/nav_overview" android:title="Tổng quan" />
+        <item android:id="@+id/nav_summary" android:title="Sơ lược (Thống kê)" />
+        <item android:id="@+id/nav_transactions" android:title="Các giao dịch" />
+        <item android:id="@+id/nav_accounts" android:title="Các tài khoản (Ví)" />
+        <item android:id="@+id/nav_calendar" android:title="Lịch" />
+    </group>
+    
+    <item android:title="Khác">
+        <menu>
+            <item android:id="@+id/nav_faq" android:title="Các câu hỏi thường gặp" />
+            <item android:id="@+id/nav_options" android:title="Các tùy chọn" />
+            <item android:id="@+id/nav_settings" android:title="Cài đặt" />
+        </menu>
+    </item>
+</menu>
