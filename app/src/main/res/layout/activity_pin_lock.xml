@@ -73,6 +73,18 @@
                 android:textStyle="bold"
                 android:text="MỞ KHÓA VÍ CHI TIÊU"/>
 
+            <TextView
+                android:id="@+id/btnRepromptBio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Chạm để Quét lại Sinh Trắc Học"
+                android:textColor="#2196F3"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:paddingTop="16dp"
+                android:visibility="gone"
+                android:layout_marginTop="8dp"/>
+
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 </LinearLayout>

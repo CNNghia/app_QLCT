@@ -10,6 +10,9 @@ import androidx.lifecycle.lifecycleScope
 import com.app.qlct.data.AppDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import android.os.Handler
+import android.os.Looper
+import androidx.appcompat.app.AppCompatDelegate
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -72,13 +75,7 @@ class SettingsActivity : AppCompatActivity() {
             Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
         }
 
-        // 3. UI Buttons (Theme, Currency, Backup)
-        findViewById<LinearLayout>(R.id.btnTheme).setOnClickListener {
-            Toast.makeText(this, "Hệ thống Dark Mode sẽ sớm ra mắt ở phiên bản Update V2", Toast.LENGTH_SHORT).show()
-        }
-        findViewById<LinearLayout>(R.id.btnCurrency).setOnClickListener {
-            Toast.makeText(this, "Hệ quy chiếu Tiền tệ hiện tại đã chốt chặt ở mức VNĐ", Toast.LENGTH_SHORT).show()
-        }
+        // Chỉ giữ Dữ liệu hệ thống
         findViewById<LinearLayout>(R.id.btnBackup).setOnClickListener {
             Toast.makeText(this, "Đang trích xuất toàn bộ dữ liệu ra Excel...", Toast.LENGTH_SHORT).show()
         }
