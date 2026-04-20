@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_summary -> startActivity(android.content.Intent(this, SummaryReportActivity::class.java))
                 R.id.nav_transactions -> startActivity(android.content.Intent(this, TransactionsActivity::class.java))
                 R.id.nav_accounts -> startActivity(android.content.Intent(this, WalletActivity::class.java))
-                R.id.nav_calendar -> Toast.makeText(this, "Tính năng xem Lịch đang được đội ngũ cập nhật!", Toast.LENGTH_SHORT).show()
+                R.id.nav_calendar -> startActivity(android.content.Intent(this, CalendarActivity::class.java))
                 R.id.nav_faq -> Toast.makeText(this, "Tính năng FAQ đang cập nhật!", Toast.LENGTH_SHORT).show()
                 R.id.nav_options -> Toast.makeText(this, "Các tuỳ chọn mở rộng đang cập nhật!", Toast.LENGTH_SHORT).show()
                 R.id.nav_settings -> Toast.makeText(this, "Thiết lập cài đặt đang cập nhật!", Toast.LENGTH_SHORT).show()
