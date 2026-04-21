@@ -151,14 +151,28 @@ class MainActivity : AppCompatActivity() {
         val adapter = TransactionAdapter(onItemClick = {}, onItemLongClick = {})
         rvTransactions.adapter = adapter
         
-        // Quan sát dữ liệu thật từ ViewModel và Tự động tính toán
-        viewModel.allTransactions.observe(this) { transactions ->
+        // Tính định mức ngày đầu - cuối của tháng hiện tại
+        val cal = java.util.Calendar.getInstance()
+        cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+        cal.set(java.util.Calendar.MINUTE, 0)
+        cal.set(java.util.Calendar.SECOND, 0)
+        val startOfMonth = cal.timeInMillis
+
+        cal.set(java.util.Calendar.DAY_OF_MONTH, cal.getActualMaximum(java.util.Calendar.DAY_OF_MONTH))
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 23)
+        cal.set(java.util.Calendar.MINUTE, 59)
+        cal.set(java.util.Calendar.SECOND, 59)
+        val endOfMonth = cal.timeInMillis
+
+        // Quan sát dữ liệu thật THUỘC VỀ THÁNG NÀY từ ViewModel và Tự động tính toán
+        viewModel.getTransactionsByMonth(startOfMonth, endOfMonth).observe(this) { transactions ->
             if (transactions != null) {
-                currentTransactions = transactions
-                adapter.submitList(transactions.take(10))
+                currentTransactions = transactions.sortedByDescending { it.date } // Mới nhất lên đầu
+                adapter.submitList(currentTransactions.take(10))
                 
-                val totalIncome = transactions.filter { it.type == "INCOME" }.sumOf { it.amount }
-                val totalExpense = transactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
+                val totalIncome = currentTransactions.filter { it.type == "INCOME" }.sumOf { it.amount }
+                val totalExpense = currentTransactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
                 
                 val formatter = java.text.DecimalFormat("#,###")
                 amountIncome.text = if (totalIncome > 0) "+ ${formatter.format(totalIncome).replace(",", ".")} ${getCurrency()}" else "0 ${getCurrency()}"
