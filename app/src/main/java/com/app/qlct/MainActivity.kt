@@ -47,8 +47,8 @@ class MainActivity : AppCompatActivity() {
             val totalIncome = currentTransactions.filter { it.type == "INCOME" }.sumOf { it.amount }
             val totalExpense = currentTransactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
             val formatter = java.text.DecimalFormat("#,###")
-            findViewById<TextView>(R.id.cardIncome).findViewById<TextView>(R.id.tvStatAmount).text = if (totalIncome > 0) "+ ${formatter.format(totalIncome).replace(",", ".")} ${getCurrency()}" else "0 ${getCurrency()}"
-            findViewById<TextView>(R.id.cardExpense).findViewById<TextView>(R.id.tvStatAmount).text = if (totalExpense > 0) "- ${formatter.format(totalExpense).replace(",", ".")} ${getCurrency()}" else "0 ${getCurrency()}"
+            findViewById<View>(R.id.cardIncome).findViewById<TextView>(R.id.tvStatAmount).text = if (totalIncome > 0) "+ ${formatter.format(totalIncome).replace(",", ".")} ${getCurrency()}" else "0 ${getCurrency()}"
+            findViewById<View>(R.id.cardExpense).findViewById<TextView>(R.id.tvStatAmount).text = if (totalExpense > 0) "- ${formatter.format(totalExpense).replace(",", ".")} ${getCurrency()}" else "0 ${getCurrency()}"
             
             // Xử lý nốt cái Tổng Số Balance
             val totalBal = totalIncome - totalExpense
