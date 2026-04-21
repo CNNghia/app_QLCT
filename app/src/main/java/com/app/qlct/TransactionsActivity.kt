@@ -36,6 +36,9 @@ class TransactionsActivity : AppCompatActivity() {
 
     private lateinit var adapter: TransactionAdapter
     private var filterType: String? = null
+    // Biến lưu trữ Toàn bộ dữ liệu của tháng hiện tại để sẵn sàng lọc
+    private var allLoadedTransactions: List<com.app.qlct.data.entity.Transaction> = emptyList()
+    private var dbCategories: List<String> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -126,8 +129,92 @@ class TransactionsActivity : AppCompatActivity() {
             loadData()
         }
 
+        // Load danh sách danh mục để chuẩn bị cho hộp lọc
+        viewModel.allCategories.observe(this) { cats ->
+            if (cats != null) {
+                dbCategories = cats.map { it.name }.distinct()
+            }
+        }
+
         findViewById<View>(R.id.fabFilter).setOnClickListener {
-            Toast.makeText(this, "Tính năng tìm kiếm sẽ được cập nhật sau!", Toast.LENGTH_SHORT).show()
+            val dialogView = layoutInflater.inflate(R.layout.dialog_advanced_filter, null)
+            val rgType = dialogView.findViewById<android.widget.RadioGroup>(R.id.rgFilterType)
+            val btnDate = dialogView.findViewById<android.widget.Button>(R.id.btnFilterDate)
+            val spinnerCat = dialogView.findViewById<android.widget.Spinner>(R.id.spinnerFilterCategory)
+            val etAmt = dialogView.findViewById<android.widget.EditText>(R.id.etFilterAmount)
+
+            // Setup Spinner Danh mục
+            val spinnerList = mutableListOf("Tất cả danh mục")
+            spinnerList.addAll(dbCategories)
+            val spinnerAdapter = android.widget.ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, spinnerList)
+            spinnerCat.adapter = spinnerAdapter
+            
+            // Setup Chọn ngày
+            var selectedDay = -1
+            btnDate.setOnClickListener {
+                val cal = Calendar.getInstance()
+                android.app.DatePickerDialog(this, { _, y, m, d ->
+                    selectedDay = d
+                    btnDate.text = "Ngày được chọn: $d/${m+1}/$y"
+                }, currentYear, currentMonth - 1, cal.get(Calendar.DAY_OF_MONTH)).show()
+            }
+
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Bộ lọc nâng cao")
+                .setView(dialogView)
+                .setPositiveButton("Áp dụng Lọc") { _, _ ->
+                    val isIncome = dialogView.findViewById<android.widget.RadioButton>(R.id.rbTypeIncome).isChecked
+                    val isExpense = dialogView.findViewById<android.widget.RadioButton>(R.id.rbTypeExpense).isChecked
+                    val catChosen = spinnerCat.selectedItem.toString()
+                    val exactAmt = etAmt.text.toString().trim()
+                    
+                    val filteredList = allLoadedTransactions.filter { t ->
+                        var match = true
+                        
+                        // 1. Lọc Loại
+                        if (isIncome && t.type != "INCOME") match = false
+                        if (isExpense && t.type != "EXPENSE") match = false
+                        
+                        // 2. Lọc Danh mục
+                        if (catChosen != "Tất cả danh mục" && t.categoryName != catChosen) match = false
+                        
+                        // 3. Lọc Số tiền chính xác
+                        if (exactAmt.isNotEmpty()) {
+                            // So sánh kiểu ép kiểu để tránh lỗi 50000.0 khác 50000
+                            val amtDouble = exactAmt.toDoubleOrNull()
+                            if (amtDouble != null && t.amount != amtDouble) match = false
+                        }
+                        
+                        // 4. Lọc Ngày
+                        if (selectedDay != -1) {
+                            val c = Calendar.getInstance()
+                            c.timeInMillis = t.date
+                            if (c.get(Calendar.DAY_OF_MONTH) != selectedDay) match = false
+                        }
+                        
+                        match
+                    }
+
+                    adapter.submitList(filteredList)
+                    updateSummary(filteredList)
+                    
+                    if (filteredList.isEmpty()) {
+                        findViewById<View>(R.id.layoutEmpty).visibility = View.VISIBLE
+                        findViewById<RecyclerView>(R.id.rvAllTransactions).visibility = View.GONE
+                    } else {
+                        findViewById<View>(R.id.layoutEmpty).visibility = View.GONE
+                        findViewById<RecyclerView>(R.id.rvAllTransactions).visibility = View.VISIBLE
+                    }
+                }
+                .setNegativeButton("Hủy / Đặt lại") { _, _ ->
+                    adapter.submitList(allLoadedTransactions)
+                    updateSummary(allLoadedTransactions)
+                    if (allLoadedTransactions.isNotEmpty()) {
+                         findViewById<View>(R.id.layoutEmpty).visibility = View.GONE
+                         findViewById<RecyclerView>(R.id.rvAllTransactions).visibility = View.VISIBLE
+                    }
+                }
+                .show()
         }
     }
 
@@ -161,6 +248,8 @@ class TransactionsActivity : AppCompatActivity() {
 
         liveData.observe(this) { transactions ->
             layoutLoading.visibility = View.GONE
+            allLoadedTransactions = transactions // Lưu lại nguyên bản gốc của tháng này
+            
             if (transactions.isEmpty()) {
                 layoutEmpty.visibility = View.VISIBLE
                 rvTransactions.visibility = View.GONE

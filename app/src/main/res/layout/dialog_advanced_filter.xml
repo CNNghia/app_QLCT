@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="20dp"
+    android:background="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- 1. Chọn Kiểu: Tất Cả / Thu / Chi -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1. Lọc theo Loại giao dịch"
+            android:textColor="#333333"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+            
+        <RadioGroup
+            android:id="@+id/rgFilterType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+            
+            <RadioButton
+                android:id="@+id/rbTypeAll"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Tất cả"
+                android:checked="true"/>
+            <RadioButton
+                android:id="@+id/rbTypeIncome"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Thu"/>
+            <RadioButton
+                android:id="@+id/rbTypeExpense"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Chi"/>
+        </RadioGroup>
+
+        <!-- 2. Chọn Ngày -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2. Lọc theo Ngày cụ thể (Tùy chọn)"
+            android:textColor="#333333"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+            
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnFilterDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Bấm để chọn Ngày (Đang để trống)"
+            android:background="#F5F5F5"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- 3. Chọn Danh mục -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3. Lọc theo Danh mục"
+            android:textColor="#333333"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+            
+        <Spinner
+            android:id="@+id/spinnerFilterCategory"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="#F5F5F5"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- 4. Lọc theo Giá tiền chính xác -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="4. Số tiền chính xác (Tùy chọn)"
+            android:textColor="#333333"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+            
+        <EditText
+            android:id="@+id/etFilterAmount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Ví dụ: 50000"
+            android:inputType="numberDecimal"
+            android:padding="12dp"
+            android:background="#F5F5F5"
+            android:layout_marginBottom="8dp"/>
+
+    </LinearLayout>
+</ScrollView>
