@@ -37,6 +37,9 @@ class AddTransactionActivity : AppCompatActivity() {
         setContentView(R.layout.activity_add_transaction)
 
         var currentMonthlyExpenses = 0.0
+        var dbCategories: List<com.app.qlct.data.entity.Category> = emptyList()
+        var dbWallets: List<com.app.qlct.model.Wallet> = emptyList()
+        
         viewModel.allTransactions.observe(this) { transactions ->
             if (transactions != null) {
                 val cal = Calendar.getInstance()
@@ -48,6 +51,12 @@ class AddTransactionActivity : AppCompatActivity() {
                     it.type == "EXPENSE" && tc.get(Calendar.MONTH) == currentMonth && tc.get(Calendar.YEAR) == currentYear
                 }.sumOf { it.amount }
             }
+        }
+        viewModel.allCategories.observe(this) { cats ->
+            if (cats != null) dbCategories = cats
+        }
+        viewModel.allWallets.observe(this) { wals ->
+            if (wals != null) dbWallets = wals
         }
 
         val btnClose = findViewById<ImageView>(R.id.btnClose)
@@ -63,32 +72,42 @@ class AddTransactionActivity : AppCompatActivity() {
 
         btnClose.setOnClickListener { finish() }
 
-        // Anh: Xử lý chọn Danh mục thu/chi dựa trên loại giao dịch hiện tại
+        // Anh: Xử lý chọn Danh mục thu/chi đồng bộ từ Database
         btnSelectCategory.setOnClickListener {
             val isIncome = toggleTransactionType.checkedButtonId == R.id.btnTypeIncome
-            val categories = if (isIncome) {
-                arrayOf("Lương", "Nhận tiền từ Cty", "Gia đình trợ cấp", "Bán hàng online", "Tiền Lì Xì")
+            
+            // Lọc danh sjánh sách từ Database thật thay vì mảng Fake
+            val filteredCats = dbCategories.filter { it.type == (if (isIncome) "INCOME" else "EXPENSE") }.map { it.name }
+            val categoriesArray = if (filteredCats.isNotEmpty()) {
+                filteredCats.toTypedArray()
             } else {
-                arrayOf("Ăn uống", "Shopping", "Giải trí", "Đổ xăng", "Hóa đơn điện nước")
+                if (isIncome) arrayOf("Lương", "Nhận tiền từ Cty", "Gia đình trợ cấp", "Bán hàng online", "Tiền Lì Xì")
+                else arrayOf("Ăn uống", "Shopping", "Giải trí", "Đổ xăng", "Hóa đơn điện nước")
             }
             
             AlertDialog.Builder(this)
                 .setTitle(if (isIncome) "Chọn danh mục thu" else "Chọn danh mục chi")
-                .setItems(categories) { _, which ->
-                    tvCategoryName.text = categories[which]
+                .setItems(categoriesArray) { _, which ->
+                    tvCategoryName.text = categoriesArray[which]
                     val colorHex = if (isIncome) "#4CAF50" else "#F44336"
                     ivCategoryIcon.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor(colorHex))
                 }
                 .show()
         }
 
-        // Xử lý chọn Ví
+        // Xử lý chọn Ví đồng bộ từ Database
         btnSelectWallet.setOnClickListener {
-            val wallets = arrayOf("Ví Tiền Mặt", "Thẻ Tín Dụng VISA", "Tài Khoản Sacombank", "Ví MoMo", "ShopeePay")
+            val walletNames = dbWallets.map { it.name }
+            val walletsArray = if (walletNames.isNotEmpty()) {
+                walletNames.toTypedArray()
+            } else {
+                arrayOf("Ví Tiền Mặt", "Thẻ Tín Dụng VISA", "Tài Khoản Sacombank", "Ví MoMo", "ShopeePay")
+            }
+            
             AlertDialog.Builder(this)
                 .setTitle("Chọn ví nguồn/đích")
-                .setItems(wallets) { _, which ->
-                    tvWalletName.text = wallets[which]
+                .setItems(walletsArray) { _, which ->
+                    tvWalletName.text = walletsArray[which]
                 }
                 .show()
         }
