@@ -81,8 +81,8 @@ class AddTransactionActivity : AppCompatActivity() {
             val categoriesArray = if (filteredCats.isNotEmpty()) {
                 filteredCats.toTypedArray()
             } else {
-                if (isIncome) arrayOf("Lương", "Nhận tiền từ Cty", "Gia đình trợ cấp", "Bán hàng online", "Tiền Lì Xì")
-                else arrayOf("Ăn uống", "Shopping", "Giải trí", "Đổ xăng", "Hóa đơn điện nước")
+                if (isIncome) arrayOf("Lương", "Gia đình trợ cấp", "Bán hàng online", "Lộc")
+                else arrayOf("Ăn uống", "Shopping", "Giải trí", "Xe cộ", "Hóa đơn điện nước", "Nhà cửa", "Chi phí phát sinh")
             }
             
             AlertDialog.Builder(this)

@@ -4,6 +4,7 @@ import androidx.room.*
 import com.app.qlct.data.entity.Category
 import kotlinx.coroutines.flow.Flow
 
+// Anh: DAO chứa các câu lệnh SQL để thao tác với bảng danh mục (categories)
 @Dao
 interface CategoryDao {
     @Query("SELECT * FROM categories ORDER BY name ASC")

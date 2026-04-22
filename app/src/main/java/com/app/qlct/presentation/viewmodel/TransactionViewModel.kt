@@ -37,8 +37,8 @@ class TransactionViewModel(
     private fun seedCategories() = viewModelScope.launch {
         val categories = categoryRepository.getCategoriesOnce()
         if (categories.isEmpty()) {
-            val income = listOf("Lương", "Nhận tiền từ Cty", "Gia đình trợ cấp", "Bán hàng online", "Tiền Lì Xì")
-            val expense = listOf("Ăn uống", "Shopping", "Giải trí", "Đổ xăng", "Hóa đơn điện nước")
+            val income = listOf("Lương", "Gia đình trợ cấp", "Bán hàng online", "Lộc")
+            val expense = listOf("Ăn uống", "Shopping", "Giải trí", "Xe cộ", "Hóa đơn điện nước", "Nhà cửa", "Chi phí phát sinh")
             
             income.forEach { name ->
                 categoryRepository.insertCategory(com.app.qlct.data.entity.Category(name = name, type = "INCOME"))

@@ -14,6 +14,7 @@ interface WalletDao {
     @Query("SELECT * FROM wallets ORDER BY createdAt DESC")
     fun getAllWallets(): Flow<List<Wallet>>
 
+    // Anh: Lấy danh sách ví một lần duy nhất (không dùng Flow) để phục vụ cho việc kiểm tra và tạo dữ liệu mẫu (Seed Data)
     @Query("SELECT * FROM wallets")
     suspend fun getWalletsOnce(): List<Wallet>
 

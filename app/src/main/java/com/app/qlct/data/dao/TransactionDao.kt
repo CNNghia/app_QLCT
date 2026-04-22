@@ -4,6 +4,7 @@ import androidx.room.*
 import com.app.qlct.data.entity.Transaction
 import kotlinx.coroutines.flow.Flow
 
+// Anh: Data Access Object (DAO) chứa các câu lệnh SQL để thao tác với bảng transactions
 @Dao
 interface TransactionDao {
     // Anh: Lấy tất cả giao dịch sắp xếp theo ngày mới nhất
@@ -14,9 +15,11 @@ interface TransactionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransaction(transaction: Transaction)
 
+    // Anh: Sửa một giao dịch đã có
     @Update
     suspend fun updateTransaction(transaction: Transaction)
 
+    // Anh: Xóa một giao dịch
     @Delete
     suspend fun deleteTransaction(transaction: Transaction)
 

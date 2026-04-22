@@ -102,6 +102,38 @@ class TransactionsActivity : AppCompatActivity() {
         )
         rvTransactions.adapter = adapter
 
+        // Anh: Thêm tính năng vuốt phải để xóa (Swipe to Delete)
+        val itemTouchHelperCallback = object : androidx.recyclerview.widget.ItemTouchHelper.SimpleCallback(0, androidx.recyclerview.widget.ItemTouchHelper.RIGHT) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                return false
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.adapterPosition
+                val transactionToDelete = adapter.currentList[position]
+                
+                androidx.appcompat.app.AlertDialog.Builder(this@TransactionsActivity)
+                    .setTitle("Xóa giao dịch")
+                    .setMessage("Bạn có chắc chắn muốn xóa giao dịch này không?")
+                    .setPositiveButton("Xóa") { _, _ ->
+                        viewModel.delete(transactionToDelete)
+                        Toast.makeText(this@TransactionsActivity, "Đã xóa giao dịch!", Toast.LENGTH_SHORT).show()
+                    }
+                    .setNegativeButton("Hủy") { _, _ ->
+                        adapter.notifyItemChanged(position)
+                    }
+                    .setOnCancelListener {
+                        adapter.notifyItemChanged(position)
+                    }
+                    .show()
+            }
+        }
+        androidx.recyclerview.widget.ItemTouchHelper(itemTouchHelperCallback).attachToRecyclerView(rvTransactions)
+
         val btnPrevMonth = findViewById<ImageView>(R.id.btnPrevMonth)
         val btnNextMonth = findViewById<ImageView>(R.id.btnNextMonth)
         val tvCurrentMonth = findViewById<TextView>(R.id.tvCurrentMonth)

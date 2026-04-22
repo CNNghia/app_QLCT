@@ -12,6 +12,7 @@ class WalletRepository(private val walletDao: WalletDao) {
 
     val allWallets: Flow<List<Wallet>> = walletDao.getAllWallets()
 
+    // Anh: Hàm phụ trợ lấy danh sách ví tĩnh phục vụ cho tính năng Seed Data
     suspend fun getWalletsOnce(): List<Wallet> = walletDao.getWalletsOnce()
 
     val totalBalance: Flow<Double?> = walletDao.getTotalBalance()
