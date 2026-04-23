@@ -24,7 +24,8 @@ import java.util.Locale
 fun WalletCard(
     wallet: Wallet,
     onEdit: (Wallet) -> Unit,
-    onDelete: (Wallet) -> Unit,
+    onDelete: (Wallet) -> Unit,   // xóa trực tiếp (legacy, giữ lại để tương thích)
+    onDeleteSafe: ((Wallet) -> Unit)? = null,   // xóa có kiểm tra transaction
     modifier: Modifier = Modifier
 ) {
     var showDeleteConfirm by remember { mutableStateOf(false) }

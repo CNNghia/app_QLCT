@@ -34,4 +34,10 @@ interface TransactionDao {
 
     @Query("SELECT * FROM transactions WHERE id = :id")
     suspend fun getTransactionById(id: Long): Transaction?
+
+    @Query("SELECT COUNT(*) FROM transactions WHERE walletName = :walletName")
+    suspend fun countByWalletName(walletName: String): Int
+
+    @Query("SELECT * FROM transactions")
+    suspend fun getAllTransactionsOnce(): List<Transaction>
 }

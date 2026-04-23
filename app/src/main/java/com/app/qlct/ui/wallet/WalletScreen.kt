@@ -41,6 +41,9 @@ fun WalletScreen(
 
     var showAddDialog by remember { mutableStateOf(false) }
     var walletToEdit by remember { mutableStateOf<Wallet?>(null) }
+    // State cho dialog cảnh báo xóa ví còn giao dịch
+    var pendingDeleteWallet by remember { mutableStateOf<Wallet?>(null) }
+    var pendingDeleteTxCount by remember { mutableStateOf(0) }
 
     Scaffold(
         floatingActionButton = {
@@ -90,7 +93,18 @@ fun WalletScreen(
                             WalletCard(
                                 wallet = wallet,
                                 onEdit = { walletToEdit = it },
-                                onDelete = { viewModel.deleteWallet(it) }
+                                onDelete = { viewModel.deleteWallet(it) },
+                                onDeleteSafe = { walletToDelete ->
+                                    viewModel.deleteWalletSafe(
+                                        wallet = walletToDelete,
+                                        onHasTransactions = { count ->
+                                            // Hiển thị cảnh báo sẽ được handle bên dưới qua state
+                                            pendingDeleteWallet = walletToDelete
+                                            pendingDeleteTxCount = count
+                                        },
+                                        onSafe = { /* Đã xóa tự động trong ViewModel */ }
+                                    )
+                                }
                             )
                         }
                     }
@@ -119,6 +133,33 @@ fun WalletScreen(
                     wallet.copy(name = name, balance = balance, currency = currency)
                 )
                 walletToEdit = null
+            }
+        )
+    }
+
+    // Dialog cảnh báo khi ví còn giao dịch liên quan
+    pendingDeleteWallet?.let { wallet ->
+        AlertDialog(
+            onDismissRequest = { pendingDeleteWallet = null },
+            title = { Text("⚠️ Ví còn giao dịch!") },
+            text = {
+                Text(
+                    "Ví \"${wallet.name}\" đang có $pendingDeleteTxCount giao dịch liên quan.\n\n"
+                    + "Nếu xóa ví, các giao dịch này sẽ vẫn tồn tại nhưng mất liên kết ví.\n\n"
+                    + "Bạn có muốn tiếp tục xóa ví không?"
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteWallet(wallet)
+                        pendingDeleteWallet = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text("Vẫn xóa ví") }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { pendingDeleteWallet = null }) { Text("Hủy") }
             }
         )
     }
