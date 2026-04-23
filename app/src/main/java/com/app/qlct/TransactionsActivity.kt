@@ -37,8 +37,7 @@ class TransactionsActivity : AppCompatActivity() {
 
     private lateinit var adapter: TransactionAdapter
     private var filterType: String? = null
-    // Biến lưu trữ Toàn bộ dữ liệu của tháng hiện tại để sẵn sàng lọc
-    private var allLoadedTransactions: List<com.app.qlct.data.entity.Transaction> = emptyList()
+    // Anh: Đã xóa biến allLoadedTransactions vì giờ đây ta nhờ Database lọc dữ liệu thẳng luôn
     private var dbCategories: List<String> = emptyList()
     private var currentSearchQuery: String = ""
 
@@ -145,8 +144,20 @@ class TransactionsActivity : AppCompatActivity() {
         // Anh: Vá lỗi Memory Leak - Chỉ Observe duy nhất 1 lần tại onCreate
         viewModel.currentMonthTransactions.observe(this) { transactions ->
             findViewById<View>(R.id.layoutLoading).visibility = View.GONE
-            allLoadedTransactions = transactions // Lưu lại nguyên bản gốc của tháng này
-            applySearchFilter() // Áp dụng search hiện tại ngay sau khi load tháng mới
+            
+            // Anh: Vá lỗi Lọc trên UI - Dữ liệu trả về đã được Database lọc sạch sẽ (Time Complexity: O(log N))
+            adapter.submitList(transactions)
+            updateSummary(transactions)
+            
+            val layoutEmpty = findViewById<View>(R.id.layoutEmpty)
+            val rvTransactions = findViewById<RecyclerView>(R.id.rvAllTransactions)
+            if (transactions.isEmpty()) {
+                layoutEmpty.visibility = View.VISIBLE
+                rvTransactions.visibility = View.GONE
+            } else {
+                layoutEmpty.visibility = View.GONE
+                rvTransactions.visibility = View.VISIBLE
+            }
         }
 
         // Anh: Vá lỗi tính tổng trên UI Thread - Chỉ Observe kết quả từ ViewModel
@@ -199,7 +210,8 @@ class TransactionsActivity : AppCompatActivity() {
 
             override fun onQueryTextChange(newText: String?): Boolean {
                 currentSearchQuery = newText?.trim() ?: ""
-                applySearchFilter()
+                // Anh: Đẩy keyword xuống ViewModel để query DB
+                viewModel.applyAdvancedFilter(category = null, amount = null, searchQuery = currentSearchQuery)
                 return true
             }
         })
@@ -211,13 +223,11 @@ class TransactionsActivity : AppCompatActivity() {
             val spinnerCat = dialogView.findViewById<android.widget.Spinner>(R.id.spinnerFilterCategory)
             val etAmt = dialogView.findViewById<android.widget.EditText>(R.id.etFilterAmount)
 
-            // Setup Spinner Danh mục
             val spinnerList = mutableListOf("Tất cả danh mục")
             spinnerList.addAll(dbCategories)
             val spinnerAdapter = android.widget.ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, spinnerList)
             spinnerCat.adapter = spinnerAdapter
             
-            // Setup Chọn ngày
             var selectedDay = -1
             btnDate.setOnClickListener {
                 val cal = Calendar.getInstance()
@@ -236,51 +246,28 @@ class TransactionsActivity : AppCompatActivity() {
                     val catChosen = spinnerCat.selectedItem.toString()
                     val exactAmt = etAmt.text.toString().trim()
                     
-                    val filteredList = allLoadedTransactions.filter { t ->
-                        var match = true
-                        
-                        // 1. Lọc Loại
-                        if (isIncome && t.type != "INCOME") match = false
-                        if (isExpense && t.type != "EXPENSE") match = false
-                        
-                        // 2. Lọc Danh mục
-                        if (catChosen != "Tất cả danh mục" && t.categoryName != catChosen) match = false
-                        
-                        // 3. Lọc Số tiền chính xác
-                        if (exactAmt.isNotEmpty()) {
-                            // So sánh kiểu ép kiểu để tránh lỗi 50000.0 khác 50000
-                            val amtDouble = exactAmt.toDoubleOrNull()
-                            if (amtDouble != null && t.amount != amtDouble) match = false
-                        }
-                        
-                        // 4. Lọc Ngày
-                        if (selectedDay != -1) {
-                            val c = Calendar.getInstance()
-                            c.timeInMillis = t.date
-                            if (c.get(Calendar.DAY_OF_MONTH) != selectedDay) match = false
-                        }
-                        
-                        match
-                    }
-
-                    adapter.submitList(filteredList)
-                    updateSummary(filteredList)
+                    val typeToFilter = if (isIncome) "INCOME" else if (isExpense) "EXPENSE" else filterType
+                    val catToFilter = if (catChosen == "Tất cả danh mục") null else catChosen
+                    val amtToFilter = exactAmt.toDoubleOrNull()
                     
-                    if (filteredList.isEmpty()) {
-                        findViewById<View>(R.id.layoutEmpty).visibility = View.VISIBLE
-                        findViewById<RecyclerView>(R.id.rvAllTransactions).visibility = View.GONE
-                    } else {
-                        findViewById<View>(R.id.layoutEmpty).visibility = View.GONE
-                        findViewById<RecyclerView>(R.id.rvAllTransactions).visibility = View.VISIBLE
+                    var exactStart: Long? = null
+                    var exactEnd: Long? = null
+                    if (selectedDay != -1) {
+                        val c = Calendar.getInstance()
+                        c.set(currentYear, currentMonth - 1, selectedDay, 0, 0, 0)
+                        exactStart = c.timeInMillis
+                        c.set(Calendar.HOUR_OF_DAY, 23)
+                        c.set(Calendar.MINUTE, 59)
+                        c.set(Calendar.SECOND, 59)
+                        exactEnd = c.timeInMillis
                     }
+                    
+                    // Anh: Bắn tham số xuống ViewModel, ViewModel báo DAO chạy SQL
+                    viewModel.applyAdvancedFilter(catToFilter, amtToFilter, currentSearchQuery, exactStart, exactEnd, typeToFilter)
                 }
                 .setNegativeButton("Hủy / Đặt lại") { _, _ ->
-                    adapter.submitList(allLoadedTransactions)
-                    updateSummary(allLoadedTransactions)
-                    if (allLoadedTransactions.isNotEmpty()) {
-                         findViewById<View>(R.id.layoutEmpty).visibility = View.GONE
-                         findViewById<RecyclerView>(R.id.rvAllTransactions).visibility = View.VISIBLE
-                    }
+                    // Khôi phục bộ lọc mặc định
+                    viewModel.applyAdvancedFilter(null, null, currentSearchQuery, null, null, filterType)
                 }
                 .show()
         }
@@ -311,35 +298,6 @@ class TransactionsActivity : AppCompatActivity() {
         viewModel.setMonthFilter(filterType, startTime, endTime)
     }
 
-    /**
-     * Áp dụng bộ lọc tìm kiếm hiện tại lên allLoadedTransactions.
-     * Gọi mỗi khi: (1) load tháng mới, (2) người dùng gõ đa text vào SearchView.
-     */
-    private fun applySearchFilter() {
-        val layoutEmpty = findViewById<View>(R.id.layoutEmpty)
-        val rvTransactions = findViewById<RecyclerView>(R.id.rvAllTransactions)
-
-        val filtered = if (currentSearchQuery.isEmpty()) {
-            allLoadedTransactions
-        } else {
-            val query = currentSearchQuery.lowercase()
-            allLoadedTransactions.filter { t ->
-                t.note.lowercase().contains(query) ||
-                t.categoryName.lowercase().contains(query) ||
-                t.walletName.lowercase().contains(query)
-            }
-        }
-
-        if (filtered.isEmpty()) {
-            layoutEmpty.visibility = View.VISIBLE
-            rvTransactions.visibility = View.GONE
-        } else {
-            layoutEmpty.visibility = View.GONE
-            rvTransactions.visibility = View.VISIBLE
-        }
-        adapter.submitList(filtered)
-        updateSummary(filtered)
-    }
 
     private fun updateSummary(transactions: List<com.app.qlct.data.entity.Transaction>) {
         // Anh: Dời logic chạy vòng lặp cực nặng ra khỏi UI Thread, đẩy sang ViewModel xử lý

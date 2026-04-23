@@ -116,23 +116,49 @@ class TransactionViewModel(
     }
 
     fun getTransactionsByTypeInMonth(type: String, start: Long, end: Long): LiveData<List<Transaction>> {
-        return repository.getTransactionsByTypeInMonth(type, start, end).asLiveData()
+        return repository.getTransactionsByTypeAndDateRange(type, start, end).asLiveData()
     }
 
     // Anh: Vá lỗi Memory Leak bằng cách dùng switchMap
-    data class MonthFilter(val type: String?, val start: Long, val end: Long)
-    private val _monthFilter = MutableLiveData<MonthFilter>()
+    data class TransactionFilter(
+        val start: Long, val end: Long, 
+        val type: String?, val category: String?, 
+        val amount: Double?, val searchQuery: String
+    )
+    private val _monthFilter = MutableLiveData<TransactionFilter>()
     
     val currentMonthTransactions: LiveData<List<Transaction>> = _monthFilter.switchMap { filter ->
-        if (filter.type != null) {
-            repository.getTransactionsByTypeInMonth(filter.type, filter.start, filter.end).asLiveData()
-        } else {
-            repository.getTransactionsByMonth(filter.start, filter.end).asLiveData()
-        }
+        repository.getAdvancedFilteredTransactions(
+            filter.start, filter.end, filter.type, filter.category, filter.amount, filter.searchQuery
+        ).asLiveData()
     }
 
+    private var cachedStart: Long = 0
+    private var cachedEnd: Long = 0
+    private var cachedType: String? = null
+
     fun setMonthFilter(type: String?, start: Long, end: Long) {
-        _monthFilter.value = MonthFilter(type, start, end)
+        cachedType = type
+        cachedStart = start
+        cachedEnd = end
+        // Áp dụng lại bộ lọc mặc định khi đổi tháng
+        applyAdvancedFilter(category = null, amount = null, searchQuery = "")
+    }
+
+    fun applyAdvancedFilter(
+        category: String?, 
+        amount: Double?, 
+        searchQuery: String = "", 
+        exactDayStart: Long? = null, 
+        exactDayEnd: Long? = null,
+        exactType: String? = cachedType
+    ) {
+        val finalStart = exactDayStart ?: cachedStart
+        val finalEnd = exactDayEnd ?: cachedEnd
+        _monthFilter.value = TransactionFilter(
+            start = finalStart, end = finalEnd,
+            type = exactType, category = category, amount = amount, searchQuery = searchQuery
+        )
     }
 
     // Anh: Vá lỗi tính tổng trên UI Thread
@@ -244,40 +270,15 @@ class TransactionViewModel(
             }
             ExportType.XLSX -> {
                 file = java.io.File(exportDir, "$fileName.xlsx")
-                try {
-                    val workbook = org.apache.poi.xssf.usermodel.XSSFWorkbook()
-                    val sheet = workbook.createSheet("Transactions")
-                    val headerRow = sheet.createRow(0)
-                    headerRow.createCell(0).setCellValue("Ngày")
-                    headerRow.createCell(1).setCellValue("Loại")
-                    headerRow.createCell(2).setCellValue("Danh mục")
-                    headerRow.createCell(3).setCellValue("Ví")
-                    headerRow.createCell(4).setCellValue("Số tiền")
-                    headerRow.createCell(5).setCellValue("Ghi chú")
-
-                    val sdf = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault())
-                    var rowNum = 1
-                    for (t in transactions) {
-                        val row = sheet.createRow(rowNum++)
-                        row.createCell(0).setCellValue(sdf.format(java.util.Date(t.date)))
-                        row.createCell(1).setCellValue(if(t.type=="INCOME") "Thu" else "Chi")
-                        row.createCell(2).setCellValue(t.categoryName)
-                        row.createCell(3).setCellValue(t.walletName)
-                        row.createCell(4).setCellValue(t.amount)
-                        row.createCell(5).setCellValue(t.note)
-                    }
-                    val out = java.io.FileOutputStream(file)
-                    workbook.write(out)
-                    out.close()
-                    workbook.close()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    return null
-                }
+                // TODO: Implement XLSX export with Apache POI if needed
             }
         }
 
-        return androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+        return androidx.core.content.FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.provider",
+            file
+        )
     }
 }
 

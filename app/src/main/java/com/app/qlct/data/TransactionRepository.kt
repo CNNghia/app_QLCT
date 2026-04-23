@@ -36,9 +36,13 @@ class TransactionRepository(private val transactionDao: TransactionDao) {
         return transactionDao.getTransactionsByDateRange(start, end)
     }
 
-    fun getTransactionsByTypeInMonth(type: String, start: Long, end: Long): Flow<List<Transaction>> {
+    fun getTransactionsByTypeAndDateRange(type: String, start: Long, end: Long): Flow<List<Transaction>> {
         return transactionDao.getTransactionsByTypeAndDateRange(type, start, end)
     }
+
+    fun getAdvancedFilteredTransactions(
+        start: Long, end: Long, type: String?, category: String?, amount: Double?, searchQuery: String
+    ): Flow<List<Transaction>> = transactionDao.getAdvancedFilteredTransactions(start, end, type, category, amount, searchQuery)
 
     // Kiểm tra số giao dịch của ví trước khi xóa
     suspend fun countByWalletName(walletName: String): Int {

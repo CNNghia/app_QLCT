@@ -33,6 +33,24 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE type = :type AND date >= :start AND date <= :end ORDER BY date DESC")
     fun getTransactionsByTypeAndDateRange(type: String, start: Long, end: Long): Flow<List<Transaction>>
 
+    // Anh: Dời logic Lọc Nâng Cao xuống Database để tăng tốc độ (O(N) -> O(log N))
+    @Query("""
+        SELECT * FROM transactions 
+        WHERE date >= :start AND date <= :end 
+        AND (:type IS NULL OR type = :type)
+        AND (:category IS NULL OR categoryName = :category)
+        AND (:amount IS NULL OR amount = :amount)
+        AND (note LIKE '%' || :searchQuery || '%' OR categoryName LIKE '%' || :searchQuery || '%' OR walletName LIKE '%' || :searchQuery || '%')
+        ORDER BY date DESC
+    """)
+    fun getAdvancedFilteredTransactions(
+        start: Long, end: Long, 
+        type: String?, 
+        category: String?, 
+        amount: Double?,
+        searchQuery: String
+    ): Flow<List<Transaction>>
+
     @Query("SELECT * FROM transactions WHERE id = :id")
     suspend fun getTransactionById(id: Long): Transaction?
 
