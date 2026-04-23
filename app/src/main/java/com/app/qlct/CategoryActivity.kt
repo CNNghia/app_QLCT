@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.app.qlct.data.AppDatabase
 import com.app.qlct.data.CategoryRepository
+import com.app.qlct.data.TransactionType
 import com.app.qlct.data.entity.Category
 import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.Job
@@ -30,7 +31,7 @@ class CategoryActivity : AppCompatActivity() {
 
     private lateinit var rvCategory: RecyclerView
     private lateinit var adapter: CatAdapter
-    private var currentType = "INCOME"
+    private var currentType = TransactionType.INCOME
 
     // Job duy nhất — cancel & restart khi tab đổi, tránh tạo nhiều collector
     private var collectJob: Job? = null
@@ -65,7 +66,7 @@ class CategoryActivity : AppCompatActivity() {
 
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
-                currentType = if (tab?.position == 0) "INCOME" else "EXPENSE"
+                currentType = if (tab?.position == 0) TransactionType.INCOME else TransactionType.EXPENSE
                 loadCategories()
             }
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
@@ -108,7 +109,7 @@ class CategoryActivity : AppCompatActivity() {
         container.addView(input)
 
         AlertDialog.Builder(this)
-            .setTitle(if (currentType == "INCOME") "Thêm Danh mục Thu nhập" else "Thêm Danh mục Chi tiêu")
+            .setTitle(if (currentType == TransactionType.INCOME) "Thêm Danh mục Thu nhập" else "Thêm Danh mục Chi tiêu")
             .setView(container)
             .setPositiveButton("Thêm") { _, _ ->
                 val name = input.text.toString().trim()
@@ -133,7 +134,7 @@ class CategoryActivity : AppCompatActivity() {
             val ivIcon = v.findViewById<ImageView>(R.id.ivCatIcon)
             fun bind(cat: Category) {
                 tvName.text = cat.name
-                ivIcon.setColorFilter(if (cat.type == "INCOME") android.graphics.Color.parseColor("#4CAF50") else android.graphics.Color.parseColor("#F44336"))
+                ivIcon.setColorFilter(if (cat.type == TransactionType.INCOME) android.graphics.Color.parseColor("#4CAF50") else android.graphics.Color.parseColor("#F44336"))
                 btnDelete.setOnClickListener { onDeleteClick(cat) }
             }
         }

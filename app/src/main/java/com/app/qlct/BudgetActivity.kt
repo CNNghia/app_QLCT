@@ -13,6 +13,8 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.app.qlct.data.AppDatabase
 import com.app.qlct.data.AppPrefs
+import com.app.qlct.data.TransactionType
+import com.app.qlct.utils.formatVND
 import com.app.qlct.data.CategoryRepository
 import com.app.qlct.data.TransactionRepository
 import com.app.qlct.data.WalletRepository
@@ -82,11 +84,7 @@ class BudgetActivity : AppCompatActivity() {
         val currentMonth = cal.get(Calendar.MONTH)
         val currentYear = cal.get(Calendar.YEAR)
 
-        val monthlyExpenses = transactions.filter {
-            val tc = Calendar.getInstance()
-            tc.timeInMillis = it.date
-            it.type == "EXPENSE" && tc.get(Calendar.MONTH) == currentMonth && tc.get(Calendar.YEAR) == currentYear
-        }.sumOf { it.amount }
+        val budgetState = viewModel.calculateBudgetState(budget, transactions, currentMonth, currentYear)
 
         val progressBudget = findViewById<ProgressBar>(R.id.progressBudget)
         val tvSpent = findViewById<TextView>(R.id.tvSpent)
@@ -94,37 +92,29 @@ class BudgetActivity : AppCompatActivity() {
         val tvWarning = findViewById<TextView>(R.id.tvWarning)
         val tvSafe = findViewById<TextView>(R.id.tvSafe)
 
-        val df = DecimalFormat("#,###")
-        tvSpent.text = "Đã chi: ${df.format(monthlyExpenses).replace(",", ".")} đ"
+        tvSpent.text = "Đã chi: ${budgetState.monthlyExpenses.formatVND()}"
 
         if (budget > 0) {
-            val remaining = budget - monthlyExpenses
-            val percent = ((monthlyExpenses / budget) * 100).toInt()
-            
-            // Ép UI chặn ở 100% nếu lố tiền (để thanh ProgressBar không bị lỗi UI)
-            progressBudget.progress = percent.coerceAtMost(100)
+            progressBudget.progress = budgetState.percent
 
-            if (remaining >= 0) {
-                tvRemaining.text = "Còn lại: ${df.format(remaining).replace(",", ".")} đ"
+            if (budgetState.remaining >= 0) {
+                tvRemaining.text = "Còn lại: ${budgetState.remaining.formatVND()}"
             } else {
-                tvRemaining.text = "Vượt mức hạn: ${df.format(Math.abs(remaining)).replace(",", ".")} đ"
+                tvRemaining.text = "Vượt mức hạn: ${Math.abs(budgetState.remaining).formatVND()}"
             }
 
-            // Logic trạng thái màu cảnh báo thông minh
-            if (percent >= 100) { 
-                // Vượt quá ngân sách (Đỏ chót)
-                progressBudget.progressTintList = ColorStateList.valueOf(Color.parseColor("#D32F2F"))
+            // Logic trạng thái màu cảnh báo thông minh được lấy từ ViewModel
+            progressBudget.progressTintList = ColorStateList.valueOf(Color.parseColor(budgetState.statusColorHex))
+            
+            if (budgetState.percent >= 100) { 
                 tvWarning.visibility = View.VISIBLE
+                tvWarning.text = "Cảnh báo: Bạn đã vượt quá ngân sách!"
                 tvSafe.visibility = View.GONE
-            } else if (percent >= 80) { 
-                // Xài tới 80% ngân sách (Cam cảnh báo)
-                progressBudget.progressTintList = ColorStateList.valueOf(Color.parseColor("#F57C00"))
+            } else if (!budgetState.isSafe) { 
                 tvWarning.visibility = View.VISIBLE
-                tvWarning.text = "Chú ý: Bạn đã sử dụng ${percent}% năng lực tài chính giới hạn!"
+                tvWarning.text = budgetState.warningText
                 tvSafe.visibility = View.GONE
             } else { 
-                // An toàn
-                progressBudget.progressTintList = ColorStateList.valueOf(Color.parseColor("#4CAF50"))
                 tvWarning.visibility = View.GONE
                 tvSafe.visibility = View.VISIBLE
             }

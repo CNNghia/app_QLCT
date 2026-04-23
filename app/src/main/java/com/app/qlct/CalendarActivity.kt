@@ -21,7 +21,9 @@ import com.app.qlct.data.WalletRepository
 import com.app.qlct.data.entity.Transaction
 import com.app.qlct.presentation.viewmodel.TransactionViewModel
 import com.app.qlct.presentation.viewmodel.TransactionViewModelFactory
-import java.text.DecimalFormat
+import com.app.qlct.data.TransactionType
+import com.app.qlct.utils.formatVND
+import com.app.qlct.utils.formatVNDSigned
 import java.util.Calendar
 
 data class CalendarDay(
@@ -145,7 +147,7 @@ class CalendarActivity : AppCompatActivity() {
             val tc = Calendar.getInstance()
             tc.timeInMillis = t.date
             val key = "${tc.get(Calendar.YEAR)}-${tc.get(Calendar.MONTH)}-${tc.get(Calendar.DAY_OF_MONTH)}"
-            if (t.type == "INCOME") {
+            if (t.type == TransactionType.INCOME) {
                 incomeMap[key] = (incomeMap[key] ?: 0.0) + t.amount
             } else {
                 expMap[key] = (expMap[key] ?: 0.0) + t.amount
@@ -178,10 +180,9 @@ class CalendarActivity : AppCompatActivity() {
         c.set(selDay.year, selDay.month, selDay.day)
         tvSelDate.text = "${dayNames[c.get(Calendar.DAY_OF_WEEK) - 1]} ${String.format("%02d/%02d/%04d", selDay.day, selDay.month + 1, selDay.year)}"
 
-        val df = DecimalFormat("#,###")
-        tvSelNet.text = df.format(selDay.net).replace(",", ".") + " đ"
-        tvSelInc.text = df.format(selDay.income).replace(",", ".") + " đ"
-        tvSelExp.text = df.format(selDay.expense).replace(",", ".") + " đ"
+        tvSelNet.text = selDay.net.formatVNDSigned()
+        tvSelInc.text = selDay.income.formatVND()
+        tvSelExp.text = selDay.expense.formatVND()
 
         val dailyTx = allTrans.filter {
             val tc = Calendar.getInstance()
@@ -226,12 +227,10 @@ class CalendarActivity : AppCompatActivity() {
 
                     if (cd.net != 0.0) {
                         tvDayNet.visibility = View.VISIBLE
-                        val prefix = if (cd.net > 0) "+" else ""
                         val colorStr = if (cd.net > 0) "#4CAF50" else "#F44336"
                         tvDayNet.setTextColor(Color.parseColor(colorStr))
                         
-                        val df = DecimalFormat("#,###")
-                        tvDayNet.text = prefix + df.format(cd.net).replace(",", ".")
+                        tvDayNet.text = cd.net.formatVNDSigned()
                     } else {
                         tvDayNet.visibility = View.INVISIBLE
                     }
