@@ -10,13 +10,17 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.app.qlct.data.AppDatabase
 import com.app.qlct.data.CategoryRepository
 import com.app.qlct.data.entity.Category
 import com.google.android.material.tabs.TabLayout
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class CategoryActivity : AppCompatActivity() {
@@ -27,6 +31,9 @@ class CategoryActivity : AppCompatActivity() {
     private lateinit var rvCategory: RecyclerView
     private lateinit var adapter: CatAdapter
     private var currentType = "INCOME"
+
+    // Job duy nhất — cancel & restart khi tab đổi, tránh tạo nhiều collector
+    private var collectJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,7 +47,7 @@ class CategoryActivity : AppCompatActivity() {
         val tabLayout = findViewById<TabLayout>(R.id.tabLayoutCategory)
         rvCategory = findViewById(R.id.rvCategory)
         rvCategory.layoutManager = LinearLayoutManager(this)
-        
+
         adapter = CatAdapter(emptyList()) { cat ->
             androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("Xoá danh mục")
@@ -49,9 +56,6 @@ class CategoryActivity : AppCompatActivity() {
                     lifecycleScope.launch {
                         categoryRepository.deleteCategory(cat)
                         Toast.makeText(this@CategoryActivity, "Đã xóa ${cat.name}", Toast.LENGTH_SHORT).show()
-                        // Dữ liệu sẽ tự load lại nhờ Flow nếu được setup đúng, 
-                        // nhưng để chắc chắn ta load thủ công luôn.
-                        loadCategories() 
                     }
                 }
                 .setNegativeButton("Huỷ", null)
@@ -75,10 +79,17 @@ class CategoryActivity : AppCompatActivity() {
         loadCategories()
     }
 
+    /**
+     * Fix memory leak: Mỗi lần gọi loadCategories() sẽ cancel job cũ trước,
+     * sau đó tạo collector MỚI duy nhất cho currentType hiện tại.
+     */
     private fun loadCategories() {
-        lifecycleScope.launch {
-            categoryRepository.getCategoriesByType(currentType).collect { list ->
-                adapter.updateData(list)
+        collectJob?.cancel()
+        collectJob = lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                categoryRepository.getCategoriesByType(currentType).collectLatest { list ->
+                    adapter.updateData(list)
+                }
             }
         }
     }
@@ -91,7 +102,7 @@ class CategoryActivity : AppCompatActivity() {
             android.widget.LinearLayout.LayoutParams.MATCH_PARENT
         )
         input.layoutParams = layoutParams
-        
+
         val container = android.widget.LinearLayout(this)
         container.setPadding(50, 20, 50, 0)
         container.addView(input)
