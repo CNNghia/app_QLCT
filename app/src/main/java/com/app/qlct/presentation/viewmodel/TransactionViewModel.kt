@@ -12,16 +12,25 @@ class TransactionViewModel(
     private val categoryRepository: com.app.qlct.data.CategoryRepository
 ) : ViewModel() {
 
+    companion object {
+        // Flag tĩnh — seedData chỉ chạy đúng 1 lần dù Activity recreate bao nhiêu lần
+        private var isDataSeeded = false
+    }
+
     // Anh: Luồng dữ liệu lấy tất cả giao dịch từ DB
     val allTransactions: LiveData<List<Transaction>> = repository.allTransactions.asLiveData()
 
     // Anh: Lấy danh sách danh mục và ví từ DB
     val allCategories: LiveData<List<com.app.qlct.data.entity.Category>> = categoryRepository.allCategories.asLiveData()
-    val allWallets: LiveData<List<com.app.qlct.model.Wallet>> = walletRepository.allWallets.asLiveData()
+    val allWallets: LiveData<List<com.app.qlct.data.entity.Wallet>> = walletRepository.allWallets.asLiveData()
 
     init {
-        seedWallets()
-        seedCategories()
+        // Chỉ chạy seed data 1 lần duy nhất (tránh lãng phí 2 query DB mỗi lần init)
+        if (!isDataSeeded) {
+            isDataSeeded = true
+            seedWallets()
+            seedCategories()
+        }
     }
 
     private fun seedWallets() = viewModelScope.launch {
@@ -29,7 +38,7 @@ class TransactionViewModel(
         if (wallets.isEmpty()) {
             val defaults = listOf("Ví Tiền Mặt", "Thẻ Tín Dụng VISA", "Tài Khoản Sacombank", "Ví MoMo", "ShopeePay")
             defaults.forEach { name ->
-                walletRepository.insertWallet(com.app.qlct.model.Wallet(name = name, balance = 0.0))
+                walletRepository.insertWallet(com.app.qlct.data.entity.Wallet(name = name, balance = 0.0))
             }
         }
     }
@@ -76,19 +85,23 @@ class TransactionViewModel(
     }
 
     /**
-     * Anh: Hàm nội bộ dùng để tính toán và cập nhật số dư ví dựa trên giao dịch
+     * Hàm nội bộ dùng để tính toán và cập nhật số dư ví dựa trên giao dịch.
+     * Nếu không tìm thấy ví (ví đã bị xóa) → bỏ qua nhưng ghi log cảnh báo.
      */
     private suspend fun updateWalletBalance(walletName: String, amount: Double, type: String, isAddition: Boolean) {
-        val wallet = walletRepository.getWalletByName(walletName) ?: return
-        
-        val delta = if (type == "INCOME") {
+        val wallet = walletRepository.getWalletByName(walletName)
+        if (wallet == null) {
+            android.util.Log.w("TransactionViewModel", "updateWalletBalance: không tìm thấy ví '$walletName' — số dư không được cập nhật")
+            return
+        }
+
+        val delta = if (type == com.app.qlct.data.TransactionType.INCOME) {
             if (isAddition) amount else -amount
         } else {
             if (isAddition) -amount else amount
         }
-        
-        val newWallet = wallet.copy(balance = wallet.balance + delta)
-        walletRepository.updateWallet(newWallet)
+
+        walletRepository.updateWallet(wallet.copy(balance = wallet.balance + delta))
     }
 
     fun getTransactionsByType(type: String): LiveData<List<Transaction>> {
@@ -101,6 +114,41 @@ class TransactionViewModel(
 
     fun getTransactionsByTypeInMonth(type: String, start: Long, end: Long): LiveData<List<Transaction>> {
         return repository.getTransactionsByTypeInMonth(type, start, end).asLiveData()
+    }
+
+    /** Helper class cho logic giám sát ngân sách từ BudgetActivity */
+    data class BudgetState(
+        val monthlyExpenses: Double,
+        val percent: Int,
+        val remaining: Double,
+        val statusColorHex: String,
+        val warningText: String?,
+        val isSafe: Boolean
+    )
+
+    fun calculateBudgetState(budgetLimit: Double, transactions: List<Transaction>, currentMonth: Int, currentYear: Int): BudgetState {
+        val monthlyExpenses = transactions.filter {
+            val tc = java.util.Calendar.getInstance()
+            tc.timeInMillis = it.date
+            it.type == com.app.qlct.data.TransactionType.EXPENSE && tc.get(java.util.Calendar.MONTH) == currentMonth && tc.get(java.util.Calendar.YEAR) == currentYear
+        }.sumOf { it.amount }
+
+        if (budgetLimit <= 0) {
+            return BudgetState(monthlyExpenses, 0, 0.0, "#4CAF50", null, false)
+        }
+
+        val remaining = budgetLimit - monthlyExpenses
+        val percent = ((monthlyExpenses / budgetLimit) * 100).toInt()
+
+        val color = when {
+            percent >= 100 -> "#D32F2F" // Vượt quá ngân sách (Đỏ chót)
+            percent >= 80 -> "#F57C00" // Xài tới 80% ngân sách (Cam cảnh báo)
+            else -> "#4CAF50" // An toàn
+        }
+        
+        val warning = if (percent in 80..99) "Chú ý: Bạn đã sử dụng ${percent}% năng lực tài chính giới hạn!" else null
+        
+        return BudgetState(monthlyExpenses, percent.coerceAtMost(100), remaining, color, warning, percent < 80)
     }
 }
 

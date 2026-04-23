@@ -35,24 +35,25 @@ import android.widget.Toast
 class MainActivity : AppCompatActivity() {
     private var currentTransactions: List<Transaction> = emptyList()
 
-    private fun getCurrency(): String {
-        return "đ"
-    }
+    // Cache kết quả tính thu/chi — onResume() chỉ dùng lại, không tính lại
+    private var cachedTotalIncome = 0.0
+    private var cachedTotalExpense = 0.0
 
     override fun onResume() {
         super.onResume()
-        // Ép Reload lại Layout khi quay lại từ màn hình Settings để nhúng Tiền Tệ Mới
+        // Reload chỉ khi có dữ liệu — dùng cache, không tính lại
         if (currentTransactions.isNotEmpty()) {
             redrawCurrentChart()
-            val totalIncome = currentTransactions.filter { it.type == "INCOME" }.sumOf { it.amount }
-            val totalExpense = currentTransactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
+
             val formatter = java.text.DecimalFormat("#,###")
-            findViewById<View>(R.id.cardIncome).findViewById<TextView>(R.id.tvStatAmount).text = if (totalIncome > 0) "+ ${formatter.format(totalIncome).replace(",", ".")} ${getCurrency()}" else "0 ${getCurrency()}"
-            findViewById<View>(R.id.cardExpense).findViewById<TextView>(R.id.tvStatAmount).text = if (totalExpense > 0) "- ${formatter.format(totalExpense).replace(",", ".")} ${getCurrency()}" else "0 ${getCurrency()}"
-            
-            // Xử lý nốt cái Tổng Số Balance
-            val totalBal = totalIncome - totalExpense
-            findViewById<TextView>(R.id.tvTotalBalance).text = "${formatter.format(totalBal).replace(",", ".")} ${getCurrency()}"
+            findViewById<View>(R.id.cardIncome).findViewById<TextView>(R.id.tvStatAmount).text =
+                if (cachedTotalIncome > 0) "+ ${formatter.format(cachedTotalIncome).replace(",", ".")} đ" else "0 đ"
+            findViewById<View>(R.id.cardExpense).findViewById<TextView>(R.id.tvStatAmount).text =
+                if (cachedTotalExpense > 0) "- ${formatter.format(cachedTotalExpense).replace(",", ".")} đ" else "0 đ"
+
+            val totalBal = cachedTotalIncome - cachedTotalExpense
+            findViewById<TextView>(R.id.tvTotalBalance).text =
+                "${formatter.format(totalBal).replace(",", ".")} đ"
         }
     }
 
@@ -128,12 +129,12 @@ class MainActivity : AppCompatActivity() {
         // Sét up chức năng Bấm Vào Card chui sang Màn Chi Tiết
         incomeCard.setOnClickListener {
             val intent = android.content.Intent(this, TransactionsActivity::class.java)
-            intent.putExtra("TYPE", "INCOME")
+            intent.putExtra("TYPE", com.app.qlct.data.TransactionType.INCOME)
             startActivity(intent)
         }
         expenseCard.setOnClickListener {
             val intent = android.content.Intent(this, TransactionsActivity::class.java)
-            intent.putExtra("TYPE", "EXPENSE")
+            intent.putExtra("TYPE", com.app.qlct.data.TransactionType.EXPENSE)
             startActivity(intent)
         }
 
@@ -168,15 +169,22 @@ class MainActivity : AppCompatActivity() {
         // Quan sát dữ liệu thật THUỘC VỀ THÁNG NÀY từ ViewModel và Tự động tính toán
         viewModel.getTransactionsByMonth(startOfMonth, endOfMonth).observe(this) { transactions ->
             if (transactions != null) {
-                currentTransactions = transactions.sortedByDescending { it.date } // Mới nhất lên đầu
+                currentTransactions = transactions.sortedByDescending { it.date }
                 adapter.submitList(currentTransactions.take(10))
-                
-                val totalIncome = currentTransactions.filter { it.type == "INCOME" }.sumOf { it.amount }
-                val totalExpense = currentTransactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
-                
+
+                // Tính và lưu vào cache — onResume() dùng lại không cần tính lại
+                cachedTotalIncome = currentTransactions
+                    .filter { it.type == com.app.qlct.data.TransactionType.INCOME }
+                    .sumOf { it.amount }
+                cachedTotalExpense = currentTransactions
+                    .filter { it.type == com.app.qlct.data.TransactionType.EXPENSE }
+                    .sumOf { it.amount }
+
                 val formatter = java.text.DecimalFormat("#,###")
-                amountIncome.text = if (totalIncome > 0) "+ ${formatter.format(totalIncome).replace(",", ".")} ${getCurrency()}" else "0 ${getCurrency()}"
-                amountExpense.text = if (totalExpense > 0) "- ${formatter.format(totalExpense).replace(",", ".")} ${getCurrency()}" else "0 ${getCurrency()}"
+                amountIncome.text = if (cachedTotalIncome > 0)
+                    "+ ${formatter.format(cachedTotalIncome).replace(",", ".")} đ" else "0 đ"
+                amountExpense.text = if (cachedTotalExpense > 0)
+                    "- ${formatter.format(cachedTotalExpense).replace(",", ".")} đ" else "0 đ"
 
                 redrawCurrentChart()
             }
