@@ -7,6 +7,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -39,6 +40,7 @@ class TransactionsActivity : AppCompatActivity() {
     // Biến lưu trữ Toàn bộ dữ liệu của tháng hiện tại để sẵn sàng lọc
     private var allLoadedTransactions: List<com.app.qlct.data.entity.Transaction> = emptyList()
     private var dbCategories: List<String> = emptyList()
+    private var currentSearchQuery: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -168,6 +170,21 @@ class TransactionsActivity : AppCompatActivity() {
             }
         }
 
+        // Search realtime theo ghi chú và danh mục
+        val searchView = findViewById<SearchView>(R.id.searchViewTransaction)
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                searchView.clearFocus()
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                currentSearchQuery = newText?.trim() ?: ""
+                applySearchFilter()
+                return true
+            }
+        })
+
         findViewById<View>(R.id.fabFilter).setOnClickListener {
             val dialogView = layoutInflater.inflate(R.layout.dialog_advanced_filter, null)
             val rgType = dialogView.findViewById<android.widget.RadioGroup>(R.id.rgFilterType)
@@ -281,17 +298,38 @@ class TransactionsActivity : AppCompatActivity() {
         liveData.observe(this) { transactions ->
             layoutLoading.visibility = View.GONE
             allLoadedTransactions = transactions // Lưu lại nguyên bản gốc của tháng này
-            
-            if (transactions.isEmpty()) {
-                layoutEmpty.visibility = View.VISIBLE
-                rvTransactions.visibility = View.GONE
-            } else {
-                layoutEmpty.visibility = View.GONE
-                rvTransactions.visibility = View.VISIBLE
-                adapter.submitList(transactions)
-                updateSummary(transactions)
+            applySearchFilter() // Áp dụng search hiện tại ngay sau khi load tháng mới
+        }
+    }
+
+    /**
+     * Áp dụng bộ lọc tìm kiếm hiện tại lên allLoadedTransactions.
+     * Gọi mỗi khi: (1) load tháng mới, (2) người dùng gõ đa text vào SearchView.
+     */
+    private fun applySearchFilter() {
+        val layoutEmpty = findViewById<View>(R.id.layoutEmpty)
+        val rvTransactions = findViewById<RecyclerView>(R.id.rvAllTransactions)
+
+        val filtered = if (currentSearchQuery.isEmpty()) {
+            allLoadedTransactions
+        } else {
+            val query = currentSearchQuery.lowercase()
+            allLoadedTransactions.filter { t ->
+                t.note.lowercase().contains(query) ||
+                t.categoryName.lowercase().contains(query) ||
+                t.walletName.lowercase().contains(query)
             }
         }
+
+        if (filtered.isEmpty()) {
+            layoutEmpty.visibility = View.VISIBLE
+            rvTransactions.visibility = View.GONE
+        } else {
+            layoutEmpty.visibility = View.GONE
+            rvTransactions.visibility = View.VISIBLE
+        }
+        adapter.submitList(filtered)
+        updateSummary(filtered)
     }
 
     private fun updateSummary(transactions: List<com.app.qlct.data.entity.Transaction>) {
