@@ -39,7 +39,7 @@ class AddTransactionActivity : AppCompatActivity() {
 
         var currentMonthlyExpenses = 0.0
         var dbCategories: List<com.app.qlct.data.entity.Category> = emptyList()
-        var dbWallets: List<com.app.qlct.model.Wallet> = emptyList()
+        var dbWallets: List<com.app.qlct.data.entity.Wallet> = emptyList()
         
         viewModel.allTransactions.observe(this) { transactions ->
             if (transactions != null) {

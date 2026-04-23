@@ -2,6 +2,7 @@ package com.app.qlct
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -12,6 +13,12 @@ import com.app.qlct.data.AppPrefs
 import java.util.concurrent.Executor
 
 class PinLockActivity : AppCompatActivity() {
+
+    // Bảo vệ brute-force: khóa sau N lần nhập sai
+    private var failedAttempts = 0
+    private val maxAttempts = 5
+    private val lockoutDurationMs = 30_000L // 30 giây
+    private var lockoutTimer: CountDownTimer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,14 +66,49 @@ class PinLockActivity : AppCompatActivity() {
         }
 
         btnUnlock.setOnClickListener {
+            // Chặn nếu đang trong thời gian lockout
+            if (failedAttempts >= maxAttempts) {
+                Toast.makeText(this, "Tài khoản đang bị khóa. Vui lòng chờ!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             val inputPin = etPin.text.toString()
             if (inputPin == savedPin) {
+                failedAttempts = 0 // Reset khi đúng
                 openMainApp()
             } else {
-                Toast.makeText(this, "Sai mã PIN! Vui lòng thử lại.", Toast.LENGTH_SHORT).show()
+                failedAttempts++
+                val remaining = maxAttempts - failedAttempts
+                if (failedAttempts >= maxAttempts) {
+                    startLockoutTimer(btnUnlock)
+                    Toast.makeText(this, "Đã nhập sai $maxAttempts lần! Vui lòng đợi 30 giây.", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(this, "Sai mã PIN! Còn $remaining lần thử.", Toast.LENGTH_SHORT).show()
+                }
                 etPin.text.clear()
             }
         }
+    }
+
+    /** Bắt đầu đếm ngược lockout, disable nút Unlock */
+    private fun startLockoutTimer(btnUnlock: Button) {
+        btnUnlock.isEnabled = false
+        lockoutTimer?.cancel()
+        lockoutTimer = object : CountDownTimer(lockoutDurationMs, 1000L) {
+            override fun onTick(millisUntilFinished: Long) {
+                val secsLeft = millisUntilFinished / 1000
+                btnUnlock.text = "Đợi ${secsLeft}s..."
+            }
+            override fun onFinish() {
+                failedAttempts = 0
+                btnUnlock.isEnabled = true
+                btnUnlock.text = "ĐĂNG NHẬP"
+            }
+        }.start()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        lockoutTimer?.cancel()
     }
 
     private fun triggerBiometricLogin(hasPinFallback: Boolean) {

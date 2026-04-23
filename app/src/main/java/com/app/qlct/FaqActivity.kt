@@ -73,9 +73,11 @@ class FaqActivity : AppCompatActivity() {
                 ivExpand.rotation = if (item.isExpanded) 180f else 0f
 
                 itemView.setOnClickListener {
+                    val pos = bindingAdapterPosition
+                    if (pos == RecyclerView.NO_ID.toInt()) return@setOnClickListener
                     TransitionManager.beginDelayedTransition(itemView.parent as ViewGroup, AutoTransition())
                     item.isExpanded = !item.isExpanded
-                    notifyItemChanged(adapterPosition)
+                    notifyItemChanged(pos)
                 }
             }
         }
