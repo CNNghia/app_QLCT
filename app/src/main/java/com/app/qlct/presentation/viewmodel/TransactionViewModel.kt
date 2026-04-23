@@ -119,6 +119,40 @@ class TransactionViewModel(
         return repository.getTransactionsByTypeInMonth(type, start, end).asLiveData()
     }
 
+    // Anh: Vá lỗi Memory Leak bằng cách dùng switchMap
+    data class MonthFilter(val type: String?, val start: Long, val end: Long)
+    private val _monthFilter = MutableLiveData<MonthFilter>()
+    
+    val currentMonthTransactions: LiveData<List<Transaction>> = _monthFilter.switchMap { filter ->
+        if (filter.type != null) {
+            repository.getTransactionsByTypeInMonth(filter.type, filter.start, filter.end).asLiveData()
+        } else {
+            repository.getTransactionsByMonth(filter.start, filter.end).asLiveData()
+        }
+    }
+
+    fun setMonthFilter(type: String?, start: Long, end: Long) {
+        _monthFilter.value = MonthFilter(type, start, end)
+    }
+
+    // Anh: Vá lỗi tính tổng trên UI Thread
+    data class SummaryResult(val totalIn: Double, val totalOut: Double, val net: Double)
+    
+    private val _summaryResult = MutableLiveData<SummaryResult>()
+    val summaryResult: LiveData<SummaryResult> = _summaryResult
+
+    fun calculateSummaryAsync(transactions: List<Transaction>) {
+        // Đẩy việc tính toán mảng sang luồng nền (Default) thay vì luồng UI (Main)
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.Default) {
+            var totalIn = 0.0
+            var totalOut = 0.0
+            for (t in transactions) {
+                if (t.type == com.app.qlct.data.TransactionType.INCOME) totalIn += t.amount else totalOut += t.amount
+            }
+            _summaryResult.postValue(SummaryResult(totalIn, totalOut, totalIn - totalOut))
+        }
+    }
+
     /** Helper class cho logic giám sát ngân sách từ BudgetActivity */
     data class BudgetState(
         val monthlyExpenses: Double,

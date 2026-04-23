@@ -141,6 +141,25 @@ class TransactionsActivity : AppCompatActivity() {
         val tvCurrentMonth = findViewById<TextView>(R.id.tvCurrentMonth)
         
         updateMonthText(tvCurrentMonth)
+        
+        // Anh: Vá lỗi Memory Leak - Chỉ Observe duy nhất 1 lần tại onCreate
+        viewModel.currentMonthTransactions.observe(this) { transactions ->
+            findViewById<View>(R.id.layoutLoading).visibility = View.GONE
+            allLoadedTransactions = transactions // Lưu lại nguyên bản gốc của tháng này
+            applySearchFilter() // Áp dụng search hiện tại ngay sau khi load tháng mới
+        }
+
+        // Anh: Vá lỗi tính tổng trên UI Thread - Chỉ Observe kết quả từ ViewModel
+        viewModel.summaryResult.observe(this) { summary ->
+            val df = DecimalFormat("#,###")
+            findViewById<TextView>(R.id.tvTotalInTx).text = "+ ${df.format(summary.totalIn)} đ"
+            findViewById<TextView>(R.id.tvTotalOutTx).text = "- ${df.format(summary.totalOut)} đ"
+            
+            val tvNet = findViewById<TextView>(R.id.tvNetTotalTx)
+            tvNet.text = (if (summary.net >= 0) "+" else "") + df.format(summary.net) + " đ"
+            tvNet.setTextColor(if (summary.net >= 0) android.graphics.Color.parseColor("#4CAF50") else android.graphics.Color.parseColor("#F44336"))
+        }
+        
         loadData()
         
         btnPrevMonth.setOnClickListener {
@@ -288,18 +307,8 @@ class TransactionsActivity : AppCompatActivity() {
         calendar.set(Calendar.SECOND, 59)
         val endTime = calendar.timeInMillis
 
-        // Quan sát dữ liệu từ ViewModel
-        val liveData = if (filterType != null) {
-            viewModel.getTransactionsByTypeInMonth(filterType!!, startTime, endTime)
-        } else {
-            viewModel.getTransactionsByMonth(startTime, endTime)
-        }
-
-        liveData.observe(this) { transactions ->
-            layoutLoading.visibility = View.GONE
-            allLoadedTransactions = transactions // Lưu lại nguyên bản gốc của tháng này
-            applySearchFilter() // Áp dụng search hiện tại ngay sau khi load tháng mới
-        }
+        // Anh: Vá lỗi Memory Leak - Thay vì observe cái mới liên tục, ta chỉ truyền params cho ViewModel
+        viewModel.setMonthFilter(filterType, startTime, endTime)
     }
 
     /**
@@ -333,20 +342,8 @@ class TransactionsActivity : AppCompatActivity() {
     }
 
     private fun updateSummary(transactions: List<com.app.qlct.data.entity.Transaction>) {
-        var totalIn = 0.0
-        var totalOut = 0.0
-        transactions.forEach {
-            if (it.type == "INCOME") totalIn += it.amount else totalOut += it.amount
-        }
-
-        val df = DecimalFormat("#,###")
-        findViewById<TextView>(R.id.tvTotalInTx).text = "+ ${df.format(totalIn)} đ"
-        findViewById<TextView>(R.id.tvTotalOutTx).text = "- ${df.format(totalOut)} đ"
-        
-        val net = totalIn - totalOut
-        val tvNet = findViewById<TextView>(R.id.tvNetTotalTx)
-        tvNet.text = (if (net >= 0) "+" else "") + df.format(net) + " đ"
-        tvNet.setTextColor(if (net >= 0) android.graphics.Color.parseColor("#4CAF50") else android.graphics.Color.parseColor("#F44336"))
+        // Anh: Dời logic chạy vòng lặp cực nặng ra khỏi UI Thread, đẩy sang ViewModel xử lý
+        viewModel.calculateSummaryAsync(transactions)
     }
 
     private fun updateMonthText(tv: TextView) {
