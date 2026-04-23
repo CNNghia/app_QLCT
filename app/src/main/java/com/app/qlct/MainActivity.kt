@@ -108,7 +108,7 @@ class MainActivity : AppCompatActivity() {
                 val actualBalance = balance ?: 0.0
                 val formatter = java.text.DecimalFormat("#,###")
                 val formattedBalance = formatter.format(actualBalance).replace(",", ".")
-                tvTotalBalance.text = "$formattedBalance ${getCurrency()}"
+                tvTotalBalance.text = "$formattedBalance đ"
             }
         }
 
@@ -221,6 +221,15 @@ class MainActivity : AppCompatActivity() {
             if (amount > 0) entries.add(PieEntry(amount.toFloat(), category))
         }
 
+        if (entries.isEmpty()) {
+            pieChart.clear()
+            pieChart.centerText = "Chưa có khoản chi"
+            pieChart.setCenterTextSize(14f)
+            pieChart.setCenterTextColor(Color.GRAY)
+            findViewById<LinearLayout>(R.id.layoutLegend).removeAllViews()
+            return
+        }
+
         val dataSet = PieDataSet(entries, "")
         val colorsStr = listOf("#FF9800", "#E91E63", "#2196F3", "#9C27B0", "#F44336", "#00BCD4", "#8BC34A")
         val colors = entries.indices.map { Color.parseColor(colorsStr[it % colorsStr.size]) }
@@ -235,14 +244,14 @@ class MainActivity : AppCompatActivity() {
         pieChart.setTransparentCircleAlpha(0)
         val formatter = java.text.DecimalFormat("#,###")
         val formattedTot = formatter.format(totalExpense).replace(",", ".")
-        pieChart.centerText = "Chi Tiêu\n- $formattedTot ${getCurrency()}"
+        pieChart.centerText = "Chi Tiêu\n- $formattedTot đ"
         pieChart.setCenterTextSize(14f)
         pieChart.setCenterTextColor(Color.parseColor("#F44336"))
         pieChart.legend.isEnabled = false // Tắt Legend rởm của thư viện
         
         pieChart.animateY(500)
 
-        updateLegend(entries, colors, "Tổng Chi", "- $formattedTot ${getCurrency()}", Color.parseColor("#F44336"))
+        updateLegend(entries, colors, "Tổng Chi", "- $formattedTot đ", Color.parseColor("#F44336"))
     }
 
     private fun setupPieChartIncome() {
@@ -254,6 +263,15 @@ class MainActivity : AppCompatActivity() {
         val entries = ArrayList<PieEntry>()
         for ((category, amount) in incomesByCategory) {
             if (amount > 0) entries.add(PieEntry(amount.toFloat(), category))
+        }
+
+        if (entries.isEmpty()) {
+            pieChart.clear()
+            pieChart.centerText = "Chưa có khoản thu"
+            pieChart.setCenterTextSize(14f)
+            pieChart.setCenterTextColor(Color.GRAY)
+            findViewById<LinearLayout>(R.id.layoutLegend).removeAllViews()
+            return
         }
 
         val dataSet = PieDataSet(entries, "")
@@ -270,14 +288,14 @@ class MainActivity : AppCompatActivity() {
         pieChart.setTransparentCircleAlpha(0)
         val formatter = java.text.DecimalFormat("#,###")
         val formattedTot = formatter.format(totalIncome).replace(",", ".")
-        pieChart.centerText = "Tổng Thu\n+ $formattedTot ${getCurrency()}"
+        pieChart.centerText = "Tổng Thu\n+ $formattedTot đ"
         pieChart.setCenterTextSize(14f)
         pieChart.setCenterTextColor(Color.parseColor("#4CAF50"))
         pieChart.legend.isEnabled = false
         
         pieChart.animateY(500)
 
-        updateLegend(entries, colors, "Tổng Thu", "+ $formattedTot ${getCurrency()}", Color.parseColor("#4CAF50"))
+        updateLegend(entries, colors, "Tổng Thu", "+ $formattedTot đ", Color.parseColor("#4CAF50"))
     }
 
     private fun setupPieChartTotal() {
@@ -288,6 +306,15 @@ class MainActivity : AppCompatActivity() {
         val entries = ArrayList<PieEntry>()
         if (totalIncome > 0) entries.add(PieEntry(totalIncome.toFloat(), "Thu nhập"))
         if (totalExpense > 0) entries.add(PieEntry(totalExpense.toFloat(), "Chi tiêu"))
+
+        if (entries.isEmpty()) {
+            pieChart.clear()
+            pieChart.centerText = "Tháng này chưa\ncó giao dịch"
+            pieChart.setCenterTextSize(14f)
+            pieChart.setCenterTextColor(Color.GRAY)
+            findViewById<LinearLayout>(R.id.layoutLegend).removeAllViews()
+            return
+        }
 
         val dataSet = PieDataSet(entries, "")
         val colors = ArrayList<Int>()
@@ -310,7 +337,7 @@ class MainActivity : AppCompatActivity() {
         val prefix = if (diff >= 0) "Số dư dương\n+" else "Số dư âm\n-"
         val colorNet = if (diff >= 0) Color.parseColor("#4CAF50") else Color.parseColor("#F44336")
         
-        pieChart.centerText = "$prefix $formattedDiff ${getCurrency()}"
+        pieChart.centerText = "$prefix $formattedDiff đ"
         pieChart.setCenterTextSize(12f)
         pieChart.setCenterTextColor(colorNet)
         pieChart.legend.isEnabled = false
@@ -318,7 +345,7 @@ class MainActivity : AppCompatActivity() {
         pieChart.animateY(500)
 
         val prefixShort = if (diff >= 0) "+" else "-"
-        updateLegend(entries, colors, "Còn Dư", "$prefixShort $formattedDiff ${getCurrency()}", colorNet)
+        updateLegend(entries, colors, "Còn Dư", "$prefixShort $formattedDiff đ", colorNet)
     }
 
     // Hàm kiến trúc chuyên dựng Layout Cột Bảng Chi Tiết (Legend) bên Trái

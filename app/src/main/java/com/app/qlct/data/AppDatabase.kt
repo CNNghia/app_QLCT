@@ -8,7 +8,7 @@ import com.app.qlct.data.entity.Transaction
 import com.app.qlct.data.entity.Wallet
 
 // Anh: Nơi cấu hình toàn bộ cơ sở dữ liệu Room, bao gồm các bảng (entities) và phiên bản (version = 2 do có thêm bảng Category)
-@Database(entities = [Transaction::class, Wallet::class, com.app.qlct.data.entity.Category::class], version = 2, exportSchema = false)
+@Database(entities = [Transaction::class, Wallet::class, com.app.qlct.data.entity.Category::class], version = 3, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun walletDao(): WalletDao
