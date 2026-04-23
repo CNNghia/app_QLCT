@@ -1,7 +1,7 @@
 package com.app.qlct.data
 
 import com.app.qlct.data.local.WalletDao
-import com.app.qlct.model.Wallet
+import com.app.qlct.data.entity.Wallet
 import kotlinx.coroutines.flow.Flow
 
 /**

@@ -22,8 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.app.qlct.model.Wallet
-import com.app.qlct.viewmodel.WalletViewModel
+import com.app.qlct.data.entity.Wallet
+import com.app.qlct.presentation.viewmodel.WalletViewModel
 import java.text.NumberFormat
 import java.util.Locale
 

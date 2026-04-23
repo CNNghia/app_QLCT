@@ -20,7 +20,7 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.app.qlct.model.Wallet
+import com.app.qlct.data.entity.Wallet
 
 class MoneyVisualTransformation : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {

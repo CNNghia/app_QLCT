@@ -1,7 +1,7 @@
 package com.app.qlct.data.local
 
 import androidx.room.*
-import com.app.qlct.model.Wallet
+import com.app.qlct.data.entity.Wallet
 import kotlinx.coroutines.flow.Flow
 
 /**

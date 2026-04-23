@@ -1,13 +1,18 @@
-package com.app.qlct.model
+package com.app.qlct.data.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
  * Entity đại diện cho một ví trong hệ thống.
  * Mỗi ví lưu trữ tên, số dư hiện tại và đơn vị tiền tệ.
  */
-@Entity(tableName = "wallets")
+@Entity(
+    tableName = "wallets",
+    indices = [Index(value = ["name"])]  // Tăng tốc getWalletByName()
+)
 data class Wallet(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
@@ -16,3 +21,4 @@ data class Wallet(
     val currency: String = "VND",
     val createdAt: Long = System.currentTimeMillis()
 )
+
