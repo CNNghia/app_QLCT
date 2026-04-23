@@ -68,6 +68,9 @@ dependencies {
     
     // Biometric Security
     implementation("androidx.biometric:biometric:1.1.0")
+
+    // Encrypted SharedPreferences (PIN security)
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

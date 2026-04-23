@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Màu riêng cho chế độ tối (Dark Mode) -->
+    <!-- Android tự chọn file này khi AppCompatDelegate = MODE_NIGHT_YES -->
+
+    <!-- Backgrounds and Surfaces -->
+    <color name="colorBackground">#121212</color>   <!-- Nền tối chuẩn Material Dark -->
+    <color name="colorCard">#1E1E1E</color>          <!-- Nền card tối -->
+
+    <!-- Text Colors -->
+    <color name="textColorPrimary">#EFEFEF</color>
+    <color name="textColorSecondary">#B0B0B0</color>
+</resources>

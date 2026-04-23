@@ -10,6 +10,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.app.qlct.data.AppDatabase
+import com.app.qlct.data.AppPrefs
 import com.app.qlct.data.entity.Transaction
 import com.app.qlct.data.TransactionRepository
 import com.app.qlct.data.WalletRepository
@@ -209,8 +210,8 @@ class AddTransactionActivity : AppCompatActivity() {
             }
 
             // Gọi ngân sách đã thiết lập (nếu có)
-            val prefs = getSharedPreferences("AppConfig", MODE_PRIVATE)
-            val budgetLimit = prefs.getFloat("BUDGET_LIMIT", 0f).toDouble()
+            val prefs = AppPrefs.get(this)
+            val budgetLimit = prefs.getLong(AppPrefs.KEY_BUDGET_LIMIT, 0L).toDouble()
 
             // Kiểm tra Logic lố tiền nếu là Chi phí
             if (type == "EXPENSE" && budgetLimit > 0) {

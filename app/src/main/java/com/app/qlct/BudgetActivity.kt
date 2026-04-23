@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.app.qlct.data.AppDatabase
+import com.app.qlct.data.AppPrefs
 import com.app.qlct.data.CategoryRepository
 import com.app.qlct.data.TransactionRepository
 import com.app.qlct.data.WalletRepository
@@ -43,12 +44,12 @@ class BudgetActivity : AppCompatActivity() {
         toolbar.setNavigationIcon(android.R.drawable.ic_menu_revert)
         toolbar.setNavigationOnClickListener { finish() }
 
-        val prefs = getSharedPreferences("AppConfig", MODE_PRIVATE)
-        val savedBudget = prefs.getFloat("BUDGET_LIMIT", 0f).toDouble()
+        val prefs = AppPrefs.get(this)
+        val savedBudget = prefs.getLong(AppPrefs.KEY_BUDGET_LIMIT, 0L).toDouble()
 
         val etBudgetLimit = findViewById<EditText>(R.id.etBudgetLimit)
         val btnSaveBudget = findViewById<Button>(R.id.btnSaveBudget)
-        
+
         if (savedBudget > 0) {
             etBudgetLimit.setText(String.format(Locale.US, "%.0f", savedBudget))
         }
@@ -56,8 +57,8 @@ class BudgetActivity : AppCompatActivity() {
         btnSaveBudget.setOnClickListener {
             val amountStr = etBudgetLimit.text.toString()
             if (amountStr.isNotEmpty()) {
-                val amount = amountStr.toDoubleOrNull() ?: 0.0
-                prefs.edit().putFloat("BUDGET_LIMIT", amount.toFloat()).apply()
+                val amount = amountStr.toLongOrNull() ?: 0L
+                prefs.edit().putLong(AppPrefs.KEY_BUDGET_LIMIT, amount).apply()
                 Toast.makeText(this, "Thiết lập thành công!", Toast.LENGTH_SHORT).show()
                 calculateAndRender()
             }
@@ -72,9 +73,9 @@ class BudgetActivity : AppCompatActivity() {
 
     private fun calculateAndRender(transactions: List<Transaction> = cachedTransactions) {
         cachedTransactions = transactions // Giữ lại mảng lịch sử khi gọi chạy lại form
-        
-        val prefs = getSharedPreferences("AppConfig", MODE_PRIVATE)
-        val budget = prefs.getFloat("BUDGET_LIMIT", 0f).toDouble()
+
+        val prefs = AppPrefs.get(this)
+        val budget = prefs.getLong(AppPrefs.KEY_BUDGET_LIMIT, 0L).toDouble()
 
         // Chỉ tính toán các khoản chi tiêu trong đúng "Tháng hiện tại"
         val cal = Calendar.getInstance()
