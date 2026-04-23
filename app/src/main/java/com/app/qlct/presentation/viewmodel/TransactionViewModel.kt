@@ -153,11 +153,103 @@ class TransactionViewModel(
         
         return BudgetState(monthlyExpenses, percent.coerceAtMost(100), remaining, color, warning, percent < 80)
     }
+
+    enum class ExportType { CSV, PDF, XLSX }
+
+    // Thịnh: Tính năng xuất báo cáo các loại định dạng
+    suspend fun exportData(context: android.content.Context, type: ExportType): android.net.Uri? {
+        val transactions = repository.getAllTransactionsOnce()
+        val exportDir = java.io.File(context.cacheDir, "exports")
+        if (!exportDir.exists()) exportDir.mkdirs()
+
+        val fileName = "QLCT_Report_${System.currentTimeMillis()}"
+        val file: java.io.File
+
+        when (type) {
+            ExportType.CSV -> {
+                file = java.io.File(exportDir, "$fileName.csv")
+                file.writeText("\uFEFFNgày,Loại,Danh mục,Ví,Số tiền,Ghi chú\n") // UTF-8 BOM
+                val sdf = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault())
+                transactions.forEach { t ->
+                    val dateStr = sdf.format(java.util.Date(t.date))
+                    val amountStr = "%.0f".format(t.amount)
+                    val safeNote = t.note.replace("\"", "\"\"") // Escape quotes in CSV
+                    file.appendText("$dateStr,${t.type},${t.categoryName},${t.walletName},$amountStr,\"$safeNote\"\n")
+                }
+            }
+            ExportType.PDF -> {
+                file = java.io.File(exportDir, "$fileName.pdf")
+                val document = android.graphics.pdf.PdfDocument()
+                val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 Size roughly
+                var page = document.startPage(pageInfo)
+                var canvas = page.canvas
+                val paint = android.graphics.Paint()
+                paint.textSize = 12f
+                paint.color = android.graphics.Color.BLACK
+                
+                var top = 50f
+                canvas.drawText("BÁO CÁO GIAO DỊCH", 50f, top, paint)
+                top += 30f
+                val sdf = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault())
+                transactions.forEach { t ->
+                    if (top > 800f) {
+                        document.finishPage(page)
+                        page = document.startPage(pageInfo)
+                        canvas = page.canvas
+                        top = 50f
+                    }
+                    val text = "${sdf.format(java.util.Date(t.date))} | ${if(t.type=="INCOME") "+" else "-"}${t.amount} | ${t.categoryName} (${t.walletName})"
+                    canvas.drawText(text, 50f, top, paint)
+                    top += 20f
+                }
+                document.finishPage(page)
+                val out = java.io.FileOutputStream(file)
+                document.writeTo(out)
+                document.close()
+                out.close()
+            }
+            ExportType.XLSX -> {
+                file = java.io.File(exportDir, "$fileName.xlsx")
+                try {
+                    val workbook = org.apache.poi.xssf.usermodel.XSSFWorkbook()
+                    val sheet = workbook.createSheet("Transactions")
+                    val headerRow = sheet.createRow(0)
+                    headerRow.createCell(0).setCellValue("Ngày")
+                    headerRow.createCell(1).setCellValue("Loại")
+                    headerRow.createCell(2).setCellValue("Danh mục")
+                    headerRow.createCell(3).setCellValue("Ví")
+                    headerRow.createCell(4).setCellValue("Số tiền")
+                    headerRow.createCell(5).setCellValue("Ghi chú")
+
+                    val sdf = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault())
+                    var rowNum = 1
+                    for (t in transactions) {
+                        val row = sheet.createRow(rowNum++)
+                        row.createCell(0).setCellValue(sdf.format(java.util.Date(t.date)))
+                        row.createCell(1).setCellValue(if(t.type=="INCOME") "Thu" else "Chi")
+                        row.createCell(2).setCellValue(t.categoryName)
+                        row.createCell(3).setCellValue(t.walletName)
+                        row.createCell(4).setCellValue(t.amount)
+                        row.createCell(5).setCellValue(t.note)
+                    }
+                    val out = java.io.FileOutputStream(file)
+                    workbook.write(out)
+                    out.close()
+                    workbook.close()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    return null
+                }
+            }
+        }
+
+        return androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+    }
 }
 
 class TransactionViewModelFactory(
-    private val repository: TransactionRepository,
-    private val walletRepository: WalletRepository,
+    private val repository: com.app.qlct.data.TransactionRepository,
+    private val walletRepository: com.app.qlct.data.WalletRepository,
     private val categoryRepository: com.app.qlct.data.CategoryRepository
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {

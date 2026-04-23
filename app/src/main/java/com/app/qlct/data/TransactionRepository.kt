@@ -44,4 +44,9 @@ class TransactionRepository(private val transactionDao: TransactionDao) {
     suspend fun countByWalletName(walletName: String): Int {
         return transactionDao.countByWalletName(walletName)
     }
+
+    // Thịnh: Lấy toàn bộ dữ liệu 1 lần tĩnh để Xuất File
+    suspend fun getAllTransactionsOnce(): List<Transaction> {
+        return transactionDao.getAllTransactionsOnce()
+    }
 }

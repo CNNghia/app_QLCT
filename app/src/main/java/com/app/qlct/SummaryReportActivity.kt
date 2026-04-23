@@ -19,7 +19,12 @@ import com.app.qlct.presentation.viewmodel.TransactionViewModelFactory
 import java.text.DecimalFormat
 import java.util.Calendar
 import com.app.qlct.data.dto.MonthSummary
-
+import android.app.AlertDialog
+import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 class SummaryReportActivity : AppCompatActivity() {
 
     private val database by lazy { AppDatabase.getDatabase(this) }
@@ -40,6 +45,17 @@ class SummaryReportActivity : AppCompatActivity() {
 
         val toolbar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
         toolbar.setNavigationOnClickListener { finish() }
+
+        // Móc Nút Xuất vào Toolbar
+        toolbar.inflateMenu(R.menu.menu_summary)
+        toolbar.setOnMenuItemClickListener { item ->
+            if (item.itemId == R.id.action_export) {
+                showExportDialog()
+                true
+            } else {
+                false
+            }
+        }
 
         val rvSummaryList = findViewById<RecyclerView>(R.id.rvSummaryList)
         rvSummaryList.layoutManager = LinearLayoutManager(this)
@@ -99,5 +115,46 @@ class SummaryReportActivity : AppCompatActivity() {
         }
 
         override fun getItemCount() = list.size
+    }
+
+    private fun showExportDialog() {
+        val options = arrayOf("Báo cáo Excel (.xlsx)", "Báo cáo PDF (.pdf)", "Dữ liệu thô (.csv)")
+        
+        AlertDialog.Builder(this)
+            .setTitle("Chọn định dạng Xuất")
+            .setItems(options) { dialog, which ->
+                val type = when (which) {
+                    0 -> TransactionViewModel.ExportType.XLSX
+                    1 -> TransactionViewModel.ExportType.PDF
+                    else -> TransactionViewModel.ExportType.CSV
+                }
+                processExport(type)
+            }
+            .setNegativeButton("Hủy", null)
+            .show()
+    }
+
+    private fun processExport(type: TransactionViewModel.ExportType) {
+        Toast.makeText(this, "Đang xử lý dữ liệu...", Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            val uri = withContext(Dispatchers.IO) {
+                viewModel.exportData(this@SummaryReportActivity, type)
+            }
+            if (uri != null) {
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    val mime = when (type) {
+                        TransactionViewModel.ExportType.XLSX -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        TransactionViewModel.ExportType.PDF -> "application/pdf"
+                        TransactionViewModel.ExportType.CSV -> "text/csv"
+                    }
+                    this.type = mime
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                startActivity(Intent.createChooser(intent, "Chia sẻ Báo cáo"))
+            } else {
+                Toast.makeText(this@SummaryReportActivity, "Lỗi quá trình xuất dữ liệu!", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }

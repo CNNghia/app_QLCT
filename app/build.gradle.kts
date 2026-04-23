@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.app.qlct"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -34,6 +34,11 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+    packaging {
+        resources {
+            excludes += listOf("META-INF/DEPENDENCIES", "META-INF/LICENSE", "META-INF/LICENSE.txt", "META-INF/license.txt", "META-INF/NOTICE", "META-INF/NOTICE.txt", "META-INF/notice.txt", "META-INF/ASL2.0")
+        }
     }
 }
 
@@ -71,6 +76,10 @@ dependencies {
 
     // Encrypted SharedPreferences (PIN security)
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    
+    // Apache POI for Excel export
+    implementation("org.apache.poi:poi:5.2.2")
+    implementation("org.apache.poi:poi-ooxml:5.2.2")
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
