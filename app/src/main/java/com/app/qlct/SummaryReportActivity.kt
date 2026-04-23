@@ -18,15 +18,7 @@ import com.app.qlct.presentation.viewmodel.TransactionViewModel
 import com.app.qlct.presentation.viewmodel.TransactionViewModelFactory
 import java.text.DecimalFormat
 import java.util.Calendar
-
-data class MonthSummary(
-    val year: Int,
-    val month: Int,
-    var totalIncome: Double = 0.0,
-    var totalExpense: Double = 0.0
-) {
-    val balance: Double get() = totalIncome - totalExpense
-}
+import com.app.qlct.data.dto.MonthSummary
 
 class SummaryReportActivity : AppCompatActivity() {
 
@@ -62,30 +54,10 @@ class SummaryReportActivity : AppCompatActivity() {
         }
         rvSummaryList.adapter = adapter
 
-        viewModel.allTransactions.observe(this) { transactions ->
-            if (transactions != null) {
-                // Nhóm tất cả giao dịch theo Từng Tháng và tính tổng Thu/Chi
-                val map = mutableMapOf<Pair<Int, Int>, MonthSummary>()
-                
-                transactions.forEach { trans ->
-                    val cal = Calendar.getInstance()
-                    cal.timeInMillis = trans.date
-                    val year = cal.get(Calendar.YEAR)
-                    val month = cal.get(Calendar.MONTH) + 1
-                    
-                    val key = Pair(year, month)
-                    val summary = map.getOrPut(key) { MonthSummary(year, month) }
-                    
-                    if (trans.type == "INCOME") {
-                        summary.totalIncome += trans.amount
-                    } else {
-                        summary.totalExpense += trans.amount
-                    }
-                }
-                
+        viewModel.monthlySummaries.observe(this) { summaries ->
+            if (summaries != null) {
                 summaryList.clear()
-                // Xếp từ Tháng mới nhất trở về trước
-                summaryList.addAll(map.values.sortedWith(compareByDescending<MonthSummary> { it.year }.thenByDescending { it.month }))
+                summaryList.addAll(summaries)
                 adapter.notifyDataSetChanged()
             }
         }

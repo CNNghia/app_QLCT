@@ -2,6 +2,7 @@ package com.app.qlct.data.dao
 
 import androidx.room.*
 import com.app.qlct.data.entity.Transaction
+import com.app.qlct.data.dto.MonthSummary
 import kotlinx.coroutines.flow.Flow
 
 // Anh: Data Access Object (DAO) chứa các câu lệnh SQL để thao tác với bảng transactions
@@ -40,4 +41,16 @@ interface TransactionDao {
 
     @Query("SELECT * FROM transactions")
     suspend fun getAllTransactionsOnce(): List<Transaction>
+
+    @Query("""
+        SELECT 
+            cast(strftime('%Y', date / 1000, 'unixepoch', 'localtime') as integer) as year,
+            cast(strftime('%m', date / 1000, 'unixepoch', 'localtime') as integer) as month,
+            SUM(CASE WHEN type = 'INCOME' THEN amount ELSE 0 END) as totalIncome,
+            SUM(CASE WHEN type = 'EXPENSE' THEN amount ELSE 0 END) as totalExpense
+        FROM transactions 
+        GROUP BY year, month
+        ORDER BY year DESC, month DESC
+    """)
+    fun getMonthlySummary(): Flow<List<MonthSummary>>
 }

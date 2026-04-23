@@ -20,6 +20,9 @@ class TransactionViewModel(
     // Anh: Luồng dữ liệu lấy tất cả giao dịch từ DB
     val allTransactions: LiveData<List<Transaction>> = repository.allTransactions.asLiveData()
 
+    // Thịnh: Dữ liệu quan sát đã được tính tổng thu/chi nhóm theo từng tháng từ Database
+    val monthlySummaries: LiveData<List<com.app.qlct.data.dto.MonthSummary>> = repository.getMonthlySummary().asLiveData()
+
     // Anh: Lấy danh sách danh mục và ví từ DB
     val allCategories: LiveData<List<com.app.qlct.data.entity.Category>> = categoryRepository.allCategories.asLiveData()
     val allWallets: LiveData<List<com.app.qlct.data.entity.Wallet>> = walletRepository.allWallets.asLiveData()
