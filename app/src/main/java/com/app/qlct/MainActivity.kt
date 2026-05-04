@@ -244,10 +244,28 @@ class MainActivity : AppCompatActivity() {
         pieChart.setTransparentCircleAlpha(0)
         val formatter = java.text.DecimalFormat("#,###")
         val formattedTot = formatter.format(totalExpense).replace(",", ".")
-        pieChart.centerText = "Chi Tiêu\n- $formattedTot đ"
+        val defaultText = "Chi Tiêu\n- $formattedTot đ"
+        
+        pieChart.centerText = defaultText
         pieChart.setCenterTextSize(14f)
         pieChart.setCenterTextColor(Color.parseColor("#F44336"))
         pieChart.legend.isEnabled = false // Tắt Legend rởm của thư viện
+        
+        // Tắt các chữ đè lên nhau trên miếng bánh
+        pieChart.setDrawEntryLabels(false)
+
+        // Bắt sự kiện bấm vào từng miếng bánh
+        pieChart.setOnChartValueSelectedListener(object : com.github.mikephil.charting.listener.OnChartValueSelectedListener {
+            override fun onValueSelected(e: com.github.mikephil.charting.data.Entry?, h: com.github.mikephil.charting.highlight.Highlight?) {
+                if (e is PieEntry) {
+                    val formattedVal = formatter.format(e.value).replace(",", ".")
+                    pieChart.centerText = "${e.label}\n- $formattedVal đ"
+                }
+            }
+            override fun onNothingSelected() {
+                pieChart.centerText = defaultText
+            }
+        })
         
         pieChart.animateY(500)
 
@@ -288,10 +306,28 @@ class MainActivity : AppCompatActivity() {
         pieChart.setTransparentCircleAlpha(0)
         val formatter = java.text.DecimalFormat("#,###")
         val formattedTot = formatter.format(totalIncome).replace(",", ".")
-        pieChart.centerText = "Tổng Thu\n+ $formattedTot đ"
+        val defaultText = "Tổng Thu\n+ $formattedTot đ"
+        
+        pieChart.centerText = defaultText
         pieChart.setCenterTextSize(14f)
         pieChart.setCenterTextColor(Color.parseColor("#4CAF50"))
         pieChart.legend.isEnabled = false
+        
+        // Tắt các chữ đè lên nhau trên miếng bánh
+        pieChart.setDrawEntryLabels(false)
+
+        // Bắt sự kiện bấm vào từng miếng bánh
+        pieChart.setOnChartValueSelectedListener(object : com.github.mikephil.charting.listener.OnChartValueSelectedListener {
+            override fun onValueSelected(e: com.github.mikephil.charting.data.Entry?, h: com.github.mikephil.charting.highlight.Highlight?) {
+                if (e is PieEntry) {
+                    val formattedVal = formatter.format(e.value).replace(",", ".")
+                    pieChart.centerText = "${e.label}\n+ $formattedVal đ"
+                }
+            }
+            override fun onNothingSelected() {
+                pieChart.centerText = defaultText
+            }
+        })
         
         pieChart.animateY(500)
 
@@ -337,10 +373,28 @@ class MainActivity : AppCompatActivity() {
         val prefix = if (diff >= 0) "Số dư dương\n+" else "Số dư âm\n-"
         val colorNet = if (diff >= 0) Color.parseColor("#4CAF50") else Color.parseColor("#F44336")
         
-        pieChart.centerText = "$prefix $formattedDiff đ"
+        val defaultText = "$prefix $formattedDiff đ"
+        pieChart.centerText = defaultText
         pieChart.setCenterTextSize(12f)
         pieChart.setCenterTextColor(colorNet)
         pieChart.legend.isEnabled = false
+        
+        // Tắt các chữ đè lên nhau trên miếng bánh
+        pieChart.setDrawEntryLabels(false)
+
+        // Bắt sự kiện bấm vào từng miếng bánh
+        pieChart.setOnChartValueSelectedListener(object : com.github.mikephil.charting.listener.OnChartValueSelectedListener {
+            override fun onValueSelected(e: com.github.mikephil.charting.data.Entry?, h: com.github.mikephil.charting.highlight.Highlight?) {
+                if (e is PieEntry) {
+                    val formattedVal = formatter.format(e.value).replace(",", ".")
+                    val pref = if (e.label == "Thu nhập") "+" else "-"
+                    pieChart.centerText = "${e.label}\n$pref $formattedVal đ"
+                }
+            }
+            override fun onNothingSelected() {
+                pieChart.centerText = defaultText
+            }
+        })
         
         pieChart.animateY(500)
 
