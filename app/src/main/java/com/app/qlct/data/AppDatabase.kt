@@ -2,6 +2,7 @@ package com.app.qlct.data
 
 import android.content.Context
 import androidx.room.*
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.app.qlct.data.dao.TransactionDao
 import com.app.qlct.data.local.WalletDao
 import com.app.qlct.data.entity.Transaction
@@ -18,6 +19,14 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
+        // Callback: tự động đồng bộ currency "VND" → "đ" cho các ví cũ khi mở DB
+        private val CURRENCY_FIX_CALLBACK = object : Callback() {
+            override fun onOpen(db: SupportSQLiteDatabase) {
+                super.onOpen(db)
+                db.execSQL("UPDATE wallets SET currency = 'đ' WHERE currency = 'VND'")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -28,6 +37,7 @@ abstract class AppDatabase : RoomDatabase() {
                 // Nếu nâng version DB mà chưa viết Migration → xóa & tạo lại DB (tránh crash)
                 // TODO: Thay bằng addMigrations(...) khi phát triển thêm tính năng có thay đổi schema
                 .fallbackToDestructiveMigration()
+                .addCallback(CURRENCY_FIX_CALLBACK)
                 .build()
                 INSTANCE = instance
                 instance

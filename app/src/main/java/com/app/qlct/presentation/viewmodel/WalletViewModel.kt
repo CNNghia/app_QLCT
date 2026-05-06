@@ -51,7 +51,7 @@ class WalletViewModel(application: Application) : AndroidViewModel(application) 
             val wallet = Wallet(
                 name = name.trim(),
                 balance = balance,
-                currency = currency.trim().ifEmpty { "VND" }
+                currency = currency.trim().ifEmpty { "đ" }
             )
             repository.insertWallet(wallet)
         }

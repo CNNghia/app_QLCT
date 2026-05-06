@@ -18,7 +18,7 @@ data class Wallet(
     val id: Int = 0,
     val name: String,
     val balance: Double,
-    val currency: String = "VND",
+    val currency: String = "đ",
     val createdAt: Long = System.currentTimeMillis()
 )
 

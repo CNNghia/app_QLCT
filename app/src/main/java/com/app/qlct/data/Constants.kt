@@ -12,6 +12,6 @@ object TransactionType {
 object AppConstants {
     const val CURRENCY_SYMBOL = "đ"
     const val DEFAULT_WALLET_NAME = "Ví Tiền Mặt"
-    const val DEFAULT_CURRENCY = "VND"
+    const val DEFAULT_CURRENCY = "đ"
     const val DB_NAME = "expense_manager_db"
 }
