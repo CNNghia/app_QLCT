@@ -51,9 +51,6 @@ class MainActivity : AppCompatActivity() {
             findViewById<View>(R.id.cardExpense).findViewById<TextView>(R.id.tvStatAmount).text =
                 if (cachedTotalExpense > 0) "- ${formatter.format(cachedTotalExpense).replace(",", ".")} đ" else "0 đ"
 
-            val totalBal = cachedTotalIncome - cachedTotalExpense
-            findViewById<TextView>(R.id.tvTotalBalance).text =
-                "${formatter.format(totalBal).replace(",", ".")} đ"
         }
     }
 
